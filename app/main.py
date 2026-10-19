@@ -12,6 +12,7 @@ from app.database import Base, engine
 from app.monitoring.checker import run_connectivity_checks
 from app.api.routes import router
 from app.api.statistics import router as statistics_router
+from app.api.reports import router as reports_router
 
 # Importing the models registers their tables with Base.metadata.
 import app.models  # noqa: F401
@@ -75,6 +76,7 @@ app.mount(
 )
 app.include_router(router)
 app.include_router(statistics_router)
+app.include_router(reports_router)
 
 
 @app.get("/", include_in_schema=False)
