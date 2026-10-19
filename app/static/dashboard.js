@@ -1,0 +1,433 @@
+"use strict";
+
+const $ = (id) => document.getElementById(id);
+
+const targetNames = {
+  "1.1.1.1": "Cloudflare DNS",
+  "8.8.8.8": "Google Public DNS",
+  "9.9.9.9": "Quad9 DNS",
+};
+
+function element(tag, className, text) {
+  const node = document.createElement(tag);
+  if (className) node.className = className;
+  if (text !== undefined) node.textContent = text;
+  return node;
+}
+
+function parseDate(value) {
+  if (!value) return null;
+  // Treat a timezone-free database timestamp as UTC.
+  const normalized = /(?:Z|[+-]\d{2}:\d{2})$/i.test(value)
+    ? value
+    : `${value}Z`;
+  const date = new Date(normalized);
+  return Number.isNaN(date.getTime()) ? null : date;
+}
+
+function formatClock(value) {
+  const date = parseDate(value);
+  if (!date) return "—";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatDateTime(value) {
+  const date = parseDate(value);
+  if (!date) return "Time unavailable";
+  return date.toLocaleString([], {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
+function formatLatency(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+    return "—";
+  }
+  return `${Number(value).toFixed(1)} ms`;
+}
+
+function formatDuration(value) {
+  if (value === null || value === undefined || !Number.isFinite(Number(value))) {
+    return "In progress";
+  }
+
+  let seconds = Math.max(0, Math.floor(Number(value)));
+  const hours = Math.floor(seconds / 3600);
+  seconds %= 3600;
+  const minutes = Math.floor(seconds / 60);
+  seconds %= 60;
+
+  if (hours) return `${hours}h ${minutes}m`;
+  if (minutes) return `${minutes}m ${seconds}s`;
+  return `${seconds}s`;
+}
+
+function statusLabel(status) {
+  return {
+    online: "Online",
+    offline: "Offline",
+    error: "Probe error",
+    not_checked: "Not checked",
+  }[status] || "Unknown";
+}
+
+function chipClass(status) {
+  return {
+    online: "chip-success",
+    offline: "chip-danger",
+    error: "chip-warning",
+    not_checked: "chip-muted",
+  }[status] || "chip-muted";
+}
+
+function makeChip(status) {
+  return element("span", `status-chip ${chipClass(status)}`, statusLabel(status));
+}
+
+async function getJson(path) {
+  const response = await fetch(path, {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  });
+  if (!response.ok) {
+    throw new Error(`${path} returned HTTP ${response.status}`);
+  }
+  return response.json();
+}
+
+function renderStatus(payload) {
+  const status = payload.internet_status || "unknown";
+  const banner = $("connection-banner");
+  banner.className = `status-banner status-${status}`;
+
+  $("status-icon").textContent =
+    status === "online" ? "✓" : status === "offline" ? "!" : "?";
+
+  $("overall-title").textContent = {
+    online: "Your internet connection is online",
+    offline: "No configured targets are responding",
+    unknown: "Connectivity status is uncertain",
+  }[status] || "Connectivity status is uncertain";
+
+  $("status-kicker").textContent =
+    status === "online" ? "CONNECTION HEALTHY" :
+    status === "offline" ? "CONNECTION INTERRUPTED" :
+    "MONITORING STATUS";
+
+  $("overall-message").textContent = {
+    online: "At least one configured destination responded to its latest probe.",
+    offline: "Every completed probe failed. Check the network and verify the results.",
+    unknown: "The monitor has insufficient results to determine connectivity.",
+  }[status] || "Waiting for a reliable connectivity result.";
+
+  const targets = Array.isArray(payload.targets) ? payload.targets : [];
+  const online = targets.filter((target) => target.status === "online").length;
+
+  $("banner-online-count").textContent = online;
+  $("reachable-count").textContent = online;
+  $("reachable-detail").textContent = `${targets.length} configured target${targets.length === 1 ? "" : "s"}`;
+  $("target-count").textContent = `${targets.length} target${targets.length === 1 ? "" : "s"}`;
+
+  const latencies = targets
+    .filter((target) => target.status === "online" &&
+      target.latency_ms !== null &&
+      Number.isFinite(Number(target.latency_ms)))
+    .map((target) => Number(target.latency_ms));
+
+  if (latencies.length) {
+    const average = latencies.reduce((total, value) => total + value, 0) / latencies.length;
+    $("avg-latency").textContent = formatLatency(average);
+    $("latency-detail").textContent = `Across ${latencies.length} responding target${latencies.length === 1 ? "" : "s"}`;
+  } else {
+    $("avg-latency").textContent = "—";
+    $("latency-detail").textContent = "No successful latency samples";
+  }
+
+  $("last-updated").textContent = payload.last_checked
+    ? `Last check ${formatClock(payload.last_checked)}`
+    : "Waiting for first check";
+
+  $("active-incidents").textContent = payload.active_outage ? "1" : "0";
+  $("incident-detail").textContent = payload.active_outage
+    ? "An internet outage is unresolved"
+    : "No unresolved internet outage";
+  renderTargets(targets);
+}
+
+function renderTargets(targets) {
+  const list = $("target-list");
+  list.replaceChildren();
+
+  if (!targets.length) {
+    list.append(element("div", "loading-row", "No monitoring targets are configured."));
+    return;
+  }
+
+  for (const target of targets) {
+    const row = element("article", "target-card");
+    const left = element("div");
+    const heading = element("div", "target-heading");
+    const mark = element("span", "target-mark", "⌁");
+    const copy = element("div", "target-copy");
+    const name = element(
+      "span", "target-name",
+      targetNames[target.target] || target.target
+    );
+    const purpose = element("span", "target-purpose", target.target);
+    const chip = makeChip(target.status);
+
+    copy.append(name, purpose);
+    heading.append(mark, copy);
+    left.append(heading, chip);
+
+    const latency = element("div", "target-latency", formatLatency(target.latency_ms));
+    const latencyLabel = element(
+      "small", "", target.timestamp ? `Checked ${formatClock(target.timestamp)}` : "Awaiting check"
+    );
+    latency.append(latencyLabel);
+
+    row.append(left, latency);
+    list.append(row);
+  }
+}
+
+function renderHistory(history) {
+  const items = Array.isArray(history.items) ? history.items : [];
+  $("recent-checks").textContent = items.length;
+  $("chart-range").textContent = `${items.length} recent samples`;
+  renderActivity(items);
+  drawChart(items);
+}
+
+function renderActivity(items) {
+  const tbody = $("activity-list");
+  tbody.replaceChildren();
+
+  if (!items.length) {
+    const row = element("tr");
+    const cell = element("td", "loading-row", "No check records yet.");
+    cell.colSpan = 3;
+    row.append(cell);
+    tbody.append(row);
+    return;
+  }
+
+  for (const item of items.slice(0, 6)) {
+    const row = element("tr");
+    const destination = element("td", "", item.target);
+    const cellStatus = element("td");
+    const probeError = item.error_message &&
+      item.error_message.startsWith("PROBE_ERROR:");
+    cellStatus.append(
+      makeChip(probeError ? "error" : item.is_up ? "online" : "offline")
+    );
+    const latency = element(
+      "td", "", item.is_up ? formatLatency(item.latency_ms) : "—"
+    );
+    row.append(destination, cellStatus, latency);
+    tbody.append(row);
+  }
+}
+
+function drawChart(items) {
+  const canvas = $("latency-chart");
+  const empty = $("chart-empty");
+
+  const points = items
+    .filter((item) => item.is_up &&
+      item.latency_ms !== null &&
+      Number.isFinite(Number(item.latency_ms)) &&
+      parseDate(item.timestamp))
+    .slice()
+    .reverse();
+
+  if (!points.length) {
+    canvas.hidden = true;
+    empty.hidden = false;
+    return;
+  }
+
+  canvas.hidden = false;
+  empty.hidden = true;
+
+  const bounds = canvas.getBoundingClientRect();
+  const width = Math.max(bounds.width, 220);
+  const height = Math.max(bounds.height, 150);
+  const ratio = Math.max(1, window.devicePixelRatio || 1);
+
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
+
+  const context = canvas.getContext("2d");
+  context.setTransform(ratio, 0, 0, ratio, 0, 0);
+  context.clearRect(0, 0, width, height);
+
+  const left = 43;
+  const right = 12;
+  const top = 12;
+  const bottom = height - 28;
+  const plotWidth = width - left - right;
+  const plotHeight = bottom - top;
+
+  const values = points.map((point) => Number(point.latency_ms));
+  let min = Math.max(0, Math.floor((Math.min(...values) - 10) / 10) * 10);
+  let max = Math.ceil((Math.max(...values) + 10) / 10) * 10;
+  if (max <= min) max = min + 10;
+
+  context.font = "10px system-ui, sans-serif";
+  context.lineWidth = 1;
+  context.strokeStyle = "#26364b";
+  context.fillStyle = "#8193ac";
+
+  for (let i = 0; i <= 3; i++) {
+    const y = top + (plotHeight / 3) * i;
+    context.beginPath();
+    context.moveTo(left, y);
+    context.lineTo(width - right, y);
+    context.stroke();
+
+    const value = max - ((max - min) / 3) * i;
+    context.fillText(`${value.toFixed(0)}`, 5, y + 3);
+  }
+
+  const coords = values.map((value, index) => ({
+    x: left + (points.length === 1
+      ? plotWidth / 2
+      : (index / (points.length - 1)) * plotWidth),
+    y: bottom - ((value - min) / (max - min)) * plotHeight,
+  }));
+
+  if (coords.length > 1) {
+    const gradient = context.createLinearGradient(0, top, 0, bottom);
+    gradient.addColorStop(0, "rgba(76, 224, 196, 0.20)");
+    gradient.addColorStop(1, "rgba(76, 224, 196, 0.00)");
+
+    context.beginPath();
+    context.moveTo(coords[0].x, bottom);
+    for (const point of coords) context.lineTo(point.x, point.y);
+    context.lineTo(coords[coords.length - 1].x, bottom);
+    context.closePath();
+    context.fillStyle = gradient;
+    context.fill();
+  }
+
+  context.beginPath();
+  coords.forEach((point, index) => {
+    if (index === 0) context.moveTo(point.x, point.y);
+    else context.lineTo(point.x, point.y);
+  });
+  context.strokeStyle = "#4ce0c4";
+  context.lineWidth = 2;
+  context.lineJoin = "round";
+  context.lineCap = "round";
+  context.stroke();
+
+  if (coords.length === 1) {
+    context.beginPath();
+    context.arc(coords[0].x, coords[0].y, 3, 0, Math.PI * 2);
+    context.fillStyle = "#4ce0c4";
+    context.fill();
+  }
+
+  context.fillStyle = "#8193ac";
+  context.font = "10px system-ui, sans-serif";
+  context.textAlign = "left";
+  context.fillText(formatClock(points[0].timestamp), left, height - 7);
+  context.textAlign = "right";
+  context.fillText(formatClock(points[points.length - 1].timestamp), width - right, height - 7);
+  context.textAlign = "left";
+}
+
+function renderOutages(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const list = $("outage-list");
+  list.replaceChildren();
+  $("outage-count").textContent = `${items.length} record${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    list.append(element("div", "loading-row", "No outages have been recorded."));
+    return;
+  }
+
+  for (const outage of items.slice(0, 6)) {
+    const row = element("div", "outage-item");
+    const resolved = Boolean(outage.is_resolved);
+    const marker = element(
+      "span", `outage-marker${resolved ? " resolved" : ""}`,
+      resolved ? "✓" : "!"
+    );
+    const copy = element("div", "outage-copy");
+    const title = element(
+      "div", "outage-title",
+      `${outage.type || "Network"} outage`
+    );
+    const meta = element(
+      "div", "outage-meta",
+      `${formatDateTime(outage.start_time)}${outage.end_time ? ` · Recovered ${formatClock(outage.end_time)}` : " · Still unresolved"}`
+    );
+    copy.append(title, meta);
+
+    const side = element("div", "outage-end");
+    side.append(element("div", "outage-duration", formatDuration(outage.duration_seconds)));
+    const state = element(
+      "div", "outage-state status-chip " + (resolved ? "chip-success" : "chip-warning"),
+      resolved ? "Resolved" : "Active"
+    );
+    side.append(state);
+
+    row.append(marker, copy, side);
+    list.append(row);
+  }
+}
+
+async function refreshDashboard() {
+  const button = $("refresh-button");
+  const icon = $("refresh-icon");
+
+  button.disabled = true;
+  icon.classList.add("spinning");
+
+  try {
+    const [status, history, outages] = await Promise.all([
+      getJson("/api/status"),
+      getJson("/api/history?limit=90"),
+      getJson("/api/outages?limit=10"),
+    ]);
+
+    renderStatus(status);
+    renderHistory(history);
+    renderOutages(outages);
+    $("last-updated").textContent =
+      `Updated ${new Date().toLocaleTimeString([], {
+        hour: "2-digit", minute: "2-digit", second: "2-digit"
+      })}`;
+  } catch (error) {
+    console.error("Dashboard refresh failed:", error);
+    $("status-kicker").textContent = "DATA CONNECTION ERROR";
+    $("overall-title").textContent = "Cannot load monitoring data";
+    $("overall-message").textContent =
+      "Check that the EthioNet Pulse server is running, then refresh.";
+    $("connection-banner").className = "status-banner status-unknown";
+    $("status-icon").textContent = "!";
+    $("last-updated").textContent = "Refresh failed";
+  } finally {
+    button.disabled = false;
+    icon.classList.remove("spinning");
+  }
+}
+
+$("refresh-button").addEventListener("click", refreshDashboard);
+window.addEventListener("resize", () => {
+  // Refreshing redraws the chart using its new container dimensions.
+  refreshDashboard();
+});
+
+refreshDashboard();
+window.setInterval(refreshDashboard, 30_000);
