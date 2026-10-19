@@ -387,6 +387,33 @@ function renderOutages(payload) {
   }
 }
 
+
+function renderStatistics(payload) {
+  const hours = Number(payload.window_hours) || 24;
+  const uptime = payload.uptime_percentage;
+
+  $("chart-range").textContent = uptime === null || uptime === undefined
+    ? `Uptime unavailable · ${hours}h`
+    : `${Number(uptime).toFixed(2)}% observed uptime · ${hours}h`;
+
+  const latency = payload.latency || {};
+  $("avg-latency").textContent = formatLatency(latency.average_ms);
+
+  if (latency.sample_count > 0) {
+    $("latency-detail").textContent =
+      `${latency.sample_count} samples · min ${formatLatency(latency.minimum_ms)} · max ${formatLatency(latency.maximum_ms)}`;
+  } else {
+    $("latency-detail").textContent =
+      "No successful latency samples in this period";
+  }
+
+  const measured = Number(payload.measurement_coverage_percentage);
+  const known = Number(payload.known_status_coverage_percentage);
+
+  $("stats-coverage").textContent =
+    `Measured ${Number.isFinite(measured) ? measured.toFixed(1) : "0.0"}% · known state ${Number.isFinite(known) ? known.toFixed(1) : "0.0"}%`;
+}
+
 async function refreshDashboard() {
   const button = $("refresh-button");
   const icon = $("refresh-icon");
@@ -399,11 +426,13 @@ async function refreshDashboard() {
       getJson("/api/status"),
       getJson("/api/history?limit=90"),
       getJson("/api/outages?limit=10"),
+      getJson("/api/statistics?hours=24"),
     ]);
 
     renderStatus(status);
     renderHistory(history);
     renderOutages(outages);
+    renderStatistics(statistics);
     $("last-updated").textContent =
       `Updated ${new Date().toLocaleTimeString([], {
         hour: "2-digit", minute: "2-digit", second: "2-digit"
