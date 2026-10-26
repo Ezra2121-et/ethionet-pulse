@@ -921,3 +921,44 @@ td .status-chip { font-size: 9px; }
   .quality-list { padding-left: 14px; padding-right: 14px; }
   .quality-card-top { flex-direction: column; }
 }
+
+
+/* Evidence-based 24-hour reliability summary */
+.reliability-report-panel { margin-top: 19px; }
+.reliability-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(205px, 1fr));
+  gap: 10px;
+  padding: 0 20px 18px;
+}
+.reliability-card {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 9px;
+  padding: 15px;
+  border-radius: 10px;
+  border: 1px solid #25344a;
+  background: #0e1725;
+}
+.reliability-label {
+  color: #8193ac;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: .8px;
+}
+.reliability-value {
+  color: #e0e8f5;
+  font-size: 24px;
+  font-weight: 750;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.reliability-note {
+  color: var(--muted);
+  font-size: 10px;
+  line-height: 1.5;
+}
+@media (max-width: 600px) {
+  .reliability-summary-grid { padding-left: 14px; padding-right: 14px; }
+}
