@@ -20,7 +20,8 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 - **Availability statistics** over a requested time window.
 - **Measurement coverage reporting** so missing data is not silently counted as uptime.
 - **CSV export** for sharing or further analysis.
-- **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and optional configured HTTP(S) services.
+- **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and configured HTTP(S) services.
+- **Continuous HTTP(S) service monitoring** with response times, HTTP status codes, persistent check history, confirmed service incidents, and Telegram outage/recovery alerts.
 - **Optional Telegram alerts** on confirmed outage start and recovery transitions, with consecutive-check thresholds to reduce transient false alarms.
 - **JSON API** with an interactive API explorer at `/docs`.
 - **Lightweight local deployment** with Python and a local database.
@@ -39,9 +40,10 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 2. The monitor pings each configured target and records the timestamp, reachability, latency when available, and any error message.
 3. Records are stored in SQLite and used to build status, history, outage, and statistics responses.
 4. The dashboard requests the API and displays current status, latency, reachable targets, recent checks, and outage information.
-5. An on-demand diagnostic compares the local gateway, public targets, DNS resolution, and any configured HTTP service URLs.
-6. Outages are recorded only after consecutive complete failed rounds; recovery requires consecutive successful rounds. Optional Telegram alerts are sent on those transitions.
-7. A CSV endpoint exports measurements and relevant outage records.
+5. An on-demand diagnostic compares the local gateway, public targets, DNS resolution, and configured HTTP service URLs.
+6. A separate scheduled job checks configured HTTP(S) services, records response codes and response times in SQLite, and tracks service-specific incidents.
+7. Internet and service incidents require consecutive failed checks before being confirmed and consecutive successful checks before recovery. Optional Telegram alerts are emitted only for confirmed transitions.
+8. CSV and JSON report endpoints expose measurements and incident history.
 
 ### A note on availability statistics
 
@@ -160,13 +162,13 @@ For the summer-camp presentation:
 5. Click **Run diagnosis** and explain how local-gateway and external-target results guide troubleshooting without proving root cause.
 6. Explain the monitoring loop, SQLite history, and why gaps are not automatically counted as uptime.
 
-See [the presentation video script](docs/DEMO_SCRIPT.md) for a concise speaking outline.
+A private speaking outline is maintained separately from this public repository.
 
 ## Known limitations and future work
 
 - ICMP ping can be blocked by a destination or network even when other services work; a failed ping alone is not proof that all internet access is unavailable.
 - This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
-- HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works.
+- HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works. Configure safe GET-compatible health endpoints and avoid embedding credentials or secrets in URL query strings.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
 - Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
 
