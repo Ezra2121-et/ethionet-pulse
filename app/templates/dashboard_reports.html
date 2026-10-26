@@ -1,0 +1,19 @@
+{% extends "app_base.html" %}
+{% block page_actions %}
+<a class="refresh-button secondary-action" href="/api/reports/csv?hours=24" download>↓ Export CSV</a>
+<a class="refresh-button secondary-action" href="/api/reports/reliability?hours=24" target="_blank" rel="noreferrer">View JSON ↗</a>
+{% endblock %}
+{% block content %}
+<section class="panel reliability-report-panel">
+  <div class="panel-heading">
+    <div><h2>Reliability summary · last 24 hours</h2><p class="panel-subtitle">Read measured availability alongside coverage. Gaps are not counted as uptime.</p></div>
+  </div>
+  <div class="reliability-summary-grid" id="reliability-summary" aria-live="polite"><div class="loading-row">Preparing reliability summary…</div></div>
+  <p class="panel-footnote">Service success rate describes recorded checks, not time-based uptime. Network uptime is meaningful only when read alongside measurement coverage.</p>
+</section>
+<section class="report-note">
+  <h2>About the exports</h2>
+  <p><strong>CSV</strong> contains measurement and incident records for analysis in a spreadsheet.</p>
+  <p><strong>JSON</strong> contains the current 24-hour reliability summary, including network, configured services, and quality samples.</p>
+</section>
+{% endblock %}
