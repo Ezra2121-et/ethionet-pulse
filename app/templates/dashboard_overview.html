@@ -1,0 +1,73 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="status-banner status-unknown" id="connection-banner" aria-live="polite">
+  <div class="status-emblem" id="status-icon">…</div>
+  <div class="status-copy">
+    <p class="eyebrow" id="status-kicker">Connection status</p>
+    <h2 id="overall-title">Checking connection</h2>
+    <p id="overall-message">Waiting for the first status response from the monitor.</p>
+  </div>
+  <div class="banner-side">
+    <strong id="banner-online-count">—</strong>
+    <span>targets reachable</span>
+  </div>
+</section>
+
+<section class="metrics-grid" aria-label="Network summary">
+  <article class="metric-card">
+    <div class="metric-heading"><span class="metric-icon icon-teal">↗</span><span>Average latency</span></div>
+    <div class="metric-value" id="avg-latency">—</div>
+    <p class="metric-foot" id="latency-detail">Waiting for measurements</p>
+  </article>
+  <article class="metric-card">
+    <div class="metric-heading"><span class="metric-icon icon-blue">⌁</span><span>Reachable targets</span></div>
+    <div class="metric-value" id="reachable-count">—</div>
+    <p class="metric-foot" id="reachable-detail">Configured monitoring targets</p>
+  </article>
+  <article class="metric-card">
+    <div class="metric-heading"><span class="metric-icon icon-purple">◷</span><span>Active incidents</span></div>
+    <div class="metric-value" id="active-incidents">—</div>
+    <p class="metric-foot" id="incident-detail">Unresolved recorded incidents</p>
+  </article>
+  <article class="metric-card">
+    <div class="metric-heading"><span class="metric-icon icon-amber">▤</span><span>Recent checks</span></div>
+    <div class="metric-value" id="recent-checks">—</div>
+    <p class="metric-foot">Recent connectivity measurements</p>
+  </article>
+</section>
+
+<section class="quick-access-section" aria-labelledby="quick-access-title">
+  <div class="section-title-row">
+    <div>
+      <h2 id="quick-access-title">Monitoring workspace</h2>
+      <p class="panel-subtitle">Open the specific tool or report you need.</p>
+    </div>
+  </div>
+  <div class="quick-access-grid">
+    <a class="quick-access-link" href="/dashboard/connectivity">
+      <span class="quick-link-icon">⌁</span><strong>Connectivity</strong>
+      <span>Reachability, checks, and latency trends</span><span class="quick-link-arrow">→</span>
+    </a>
+    <a class="quick-access-link" href="/dashboard/services">
+      <span class="quick-link-icon">◎</span><strong>Service monitoring</strong>
+      <span>HTTP status and endpoint history</span><span class="quick-link-arrow">→</span>
+    </a>
+    <a class="quick-access-link" href="/dashboard/quality">
+      <span class="quick-link-icon">◌</span><strong>Network quality</strong>
+      <span>Packet loss, latency, and jitter</span><span class="quick-link-arrow">→</span>
+    </a>
+    <a class="quick-access-link" href="/dashboard/diagnosis">
+      <span class="quick-link-icon">⌕</span><strong>Diagnosis</strong>
+      <span>Compare gateway, DNS, and external targets</span><span class="quick-link-arrow">→</span>
+    </a>
+    <a class="quick-access-link" href="/dashboard/incidents">
+      <span class="quick-link-icon">◷</span><strong>Incidents</strong>
+      <span>Outages, failures, and recovery history</span><span class="quick-link-arrow">→</span>
+    </a>
+    <a class="quick-access-link" href="/dashboard/reports">
+      <span class="quick-link-icon">▤</span><strong>Reliability reports</strong>
+      <span>Coverage, metrics, and exports</span><span class="quick-link-arrow">→</span>
+    </a>
+  </div>
+</section>
+{% endblock %}
