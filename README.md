@@ -120,7 +120,16 @@ Edit the local `.env` file before launching the application:
 | `INTERNET_TARGETS` | Comma-separated hosts/IP addresses to check | `1.1.1.1,8.8.8.8,9.9.9.9` |
 | `REQUEST_TIMEOUT_SECONDS` | Per-target ping timeout | `5` |
 | `DNS_TEST_HOSTS` | Comma-separated hostnames for resolver checks | `example.com,cloudflare.com` |
-| `SERVICE_URLS` | Optional comma-separated HTTP(S) service URLs | empty |
+| `SERVICE_URLS` | Comma-separated HTTP(S) services for monitoring and diagnosis | `https://example.com` in `.env.example` |
+| `SERVICE_REQUEST_TIMEOUT_SECONDS` | HTTP service request timeout | `10` |
+| `SERVICE_FAILURE_THRESHOLD` | Consecutive failed service checks required for an incident | `2` |
+| `SERVICE_RECOVERY_THRESHOLD` | Consecutive successful service checks required for recovery | `2` |
+| `PING_SAMPLES_PER_CHECK` | Packets sent per quality sample (1–20) | `5` |
+| `QUALITY_PING_TIMEOUT_SECONDS` | Per-packet ICMP response timeout | `1` |
+| `PACKET_LOSS_WARNING_PERCENT` | Packet loss warning threshold | `20.0` |
+| `HIGH_LATENCY_WARNING_MS` | Average latency warning threshold | `400.0` |
+| `DEGRADATION_CONSECUTIVE_ROUNDS` | Degraded rounds required to open a quality incident | `3` |
+| `QUALITY_RECOVERY_CONSECUTIVE_ROUNDS` | Healthy rounds required to resolve a quality incident | `3` |
 | `OUTAGE_FAILURE_THRESHOLD` | Consecutive complete failed rounds needed to confirm an outage | `2` |
 | `OUTAGE_RECOVERY_THRESHOLD` | Consecutive successful rounds needed to confirm recovery | `2` |
 | `ENABLE_TELEGRAM_ALERTS` | Enable Telegram outage/recovery notifications | `false` |
@@ -145,7 +154,14 @@ Never commit your real bot token or private chat configuration to GitHub.
 | --- | --- | --- |
 | GET | `/health` | Verify that the application is responding |
 | GET | `/api/status` | Current status for configured targets |
-| GET | `/api/diagnose` | On-demand gateway and public-target checks with cautious troubleshooting guidance |
+| GET | `/api/diagnose` | On-demand gateway, public-target, DNS, and configured HTTP service checks |
+| GET | `/api/services` | Latest status for each configured HTTP service |
+| GET | `/api/services/history?limit=100` | Stored HTTP service check history |
+| GET | `/api/service-outages?limit=10` | Confirmed service incidents and recovery durations |
+| GET | `/api/quality` | Latest packet loss and latency quality for each network target |
+| GET | `/api/quality/history?limit=100` | Historical multi-packet quality samples |
+| GET | `/api/quality-incidents?limit=10` | Sustained degradation and recovery incidents |
+| GET | `/api/reports/reliability?hours=24` | JSON summary of network, service, and quality reliability |
 | GET | `/api/history?limit=100` | Recent connectivity checks |
 | GET | `/api/outages?limit=100` | Recent outage records |
 | GET | `/api/statistics?hours=24` | Availability, measurement coverage, latency, and outage summaries |
