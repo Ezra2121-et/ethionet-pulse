@@ -22,6 +22,14 @@ class Settings(BaseSettings):
     SERVICE_FAILURE_THRESHOLD: int = 2
     SERVICE_RECOVERY_THRESHOLD: int = 2
 
+    # Packet-loss and latency quality monitoring (in addition to single-packet checks).
+    PING_SAMPLES_PER_CHECK: int = 5
+    QUALITY_PING_TIMEOUT_SECONDS: int = 1
+    PACKET_LOSS_WARNING_PERCENT: float = 20.0
+    HIGH_LATENCY_WARNING_MS: float = 400.0
+    DEGRADATION_CONSECUTIVE_ROUNDS: int = 3
+    QUALITY_RECOVERY_CONSECUTIVE_ROUNDS: int = 3
+
     # An outage is confirmed after this many consecutive failed check rounds.
     OUTAGE_FAILURE_THRESHOLD: int = 2
     OUTAGE_RECOVERY_THRESHOLD: int = 2
