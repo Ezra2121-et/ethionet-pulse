@@ -77,6 +77,8 @@ function statusLabel(status) {
     not_checked: "Not checked",
     unavailable: "Unavailable",
     pending: "Awaiting first check",
+    healthy: "Healthy",
+    degraded: "Degraded",
     resolved: "DNS resolved",
     failed: "DNS lookup failed",
     unhealthy: "HTTP unhealthy",
@@ -93,6 +95,8 @@ function chipClass(status) {
     error: "chip-warning",
     not_checked: "chip-muted",
     pending: "chip-muted",
+    healthy: "chip-success",
+    degraded: "chip-warning",
     unavailable: "chip-muted",
   }[status] || "chip-muted";
 }
@@ -490,6 +494,104 @@ function renderServiceOutages(payload) {
 }
 
 
+function renderNetworkQuality(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const root = $("quality-list");
+  root.replaceChildren();
+  $("quality-target-count").textContent =
+    `${items.length} target${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    root.append(element("div", "service-empty", "No network targets are configured."));
+    return;
+  }
+
+  for (const item of items) {
+    const card = element("article", "quality-card");
+    const top = element("div", "quality-card-top");
+    top.append(
+      element("strong", "quality-target", item.target),
+      makeChip(item.status || "pending")
+    );
+
+    const metrics = element("div", "quality-metrics");
+    const loss = item.packet_loss_percent;
+    const sent = item.packets_sent;
+    const received = item.packets_received;
+    const lossText = loss === null || loss === undefined
+      ? "Packet loss unavailable"
+      : `${Number(loss).toFixed(1)}% loss · ${received}/${sent} replies`;
+    metrics.append(element("span", "", lossText));
+    metrics.append(element(
+      "span", "",
+      `Avg latency ${formatLatency(item.latency_avg_ms)}`
+    ));
+    metrics.append(element(
+      "span", "",
+      `Jitter ${formatLatency(item.latency_jitter_ms)}`
+    ));
+
+    card.append(top, metrics);
+    card.append(element(
+      "small", "service-meta",
+      item.timestamp ? `Last sample ${formatDateTime(item.timestamp)}` : "Waiting for first sample"
+    ));
+    if (item.error_message) card.append(element("small", "service-error", item.error_message));
+    root.append(card);
+  }
+}
+
+function renderQualityIncidents(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const root = $("quality-incident-list");
+  root.replaceChildren();
+  $("quality-incident-count").textContent =
+    `${items.length} incident${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    root.append(element("div", "loading-row", "No sustained quality incidents recorded."));
+    return;
+  }
+
+  for (const incident of items.slice(0, 5)) {
+    const row = element("div", "service-incident");
+    row.append(element(
+      "span",
+      `outage-marker${incident.is_resolved ? " resolved" : ""}`,
+      incident.is_resolved ? "✓" : "!"
+    ));
+    const copy = element("div", "service-incident-copy");
+    const details = [
+      incident.peak_packet_loss_percent !== null && incident.peak_packet_loss_percent !== undefined
+        ? `Peak loss ${Number(incident.peak_packet_loss_percent).toFixed(1)}%`
+        : null,
+      incident.peak_latency_ms !== null && incident.peak_latency_ms !== undefined
+        ? `Peak average latency ${formatLatency(incident.peak_latency_ms)}`
+        : null,
+    ].filter(Boolean).join(" · ");
+    copy.append(
+      element("strong", "service-incident-url", incident.target),
+      element(
+        "small", "service-meta",
+        `${formatDateTime(incident.start_time)}${incident.end_time ? ` · Recovered ${formatClock(incident.end_time)}` : " · Still unresolved"}`
+      ),
+      element("small", "service-meta", details || "Quality threshold exceeded")
+    );
+    const side = element("div", "service-incident-side");
+    side.append(
+      element("strong", "outage-duration", formatDuration(incident.duration_seconds)),
+      element(
+        "span",
+        `status-chip ${incident.is_resolved ? "chip-success" : "chip-warning"}`,
+        incident.is_resolved ? "Recovered" : "Active"
+      )
+    );
+    row.append(copy, side);
+    root.append(row);
+  }
+}
+
+
 function renderStatistics(payload) {
   const hours = Number(payload.window_hours) || 24;
   const uptime = payload.uptime_percentage;
@@ -607,13 +709,18 @@ async function refreshDashboard() {
   icon.classList.add("spinning");
 
   try {
-    const [status, history, outages, statistics, services, serviceOutages] = await Promise.all([
+    const [
+      status, history, outages, statistics, services, serviceOutages,
+      quality, qualityIncidents,
+    ] = await Promise.all([
       getJson("/api/status"),
       getJson("/api/history?limit=90"),
       getJson("/api/outages?limit=10"),
       getJson("/api/statistics?hours=24"),
       getJson("/api/services"),
       getJson("/api/service-outages?limit=10"),
+      getJson("/api/quality"),
+      getJson("/api/quality-incidents?limit=10"),
     ]);
 
     renderStatus(status);
@@ -622,6 +729,8 @@ async function refreshDashboard() {
     renderStatistics(statistics);
     renderServices(services);
     renderServiceOutages(serviceOutages);
+    renderNetworkQuality(quality);
+    renderQualityIncidents(qualityIncidents);
     $("last-updated").textContent =
       `Updated ${new Date().toLocaleTimeString([], {
         hour: "2-digit", minute: "2-digit", second: "2-digit"
