@@ -297,8 +297,8 @@ function drawChart(items) {
 
   context.font = "10px system-ui, sans-serif";
   context.lineWidth = 1;
-  context.strokeStyle = "#26364b";
-  context.fillStyle = "#8193ac";
+  context.strokeStyle = "#e4ebe7";
+  context.fillStyle = "#6b7b72";
 
   for (let i = 0; i <= 3; i++) {
     const y = top + (plotHeight / 3) * i;
@@ -320,8 +320,8 @@ function drawChart(items) {
 
   if (coords.length > 1) {
     const gradient = context.createLinearGradient(0, top, 0, bottom);
-    gradient.addColorStop(0, "rgba(76, 224, 196, 0.20)");
-    gradient.addColorStop(1, "rgba(76, 224, 196, 0.00)");
+    gradient.addColorStop(0, "rgba(33, 133, 109, 0.18)");
+    gradient.addColorStop(1, "rgba(33, 133, 109, 0.00)");
 
     context.beginPath();
     context.moveTo(coords[0].x, bottom);
@@ -337,7 +337,7 @@ function drawChart(items) {
     if (index === 0) context.moveTo(point.x, point.y);
     else context.lineTo(point.x, point.y);
   });
-  context.strokeStyle = "#4ce0c4";
+  context.strokeStyle = "#21856d";
   context.lineWidth = 2;
   context.lineJoin = "round";
   context.lineCap = "round";
@@ -346,11 +346,11 @@ function drawChart(items) {
   if (coords.length === 1) {
     context.beginPath();
     context.arc(coords[0].x, coords[0].y, 3, 0, Math.PI * 2);
-    context.fillStyle = "#4ce0c4";
+    context.fillStyle = "#21856d";
     context.fill();
   }
 
-  context.fillStyle = "#8193ac";
+  context.fillStyle = "#6b7b72";
   context.font = "10px system-ui, sans-serif";
   context.textAlign = "left";
   context.fillText(formatClock(points[0].timestamp), left, height - 7);
@@ -624,24 +624,24 @@ function renderReliabilityReport(payload) {
 
   const cards = [
     {
-      label: "OBSERVED NETWORK UPTIME",
+      label: "Observed network uptime",
       value: network.uptime_percentage === null || network.uptime_percentage === undefined
         ? "No data"
         : `${Number(network.uptime_percentage).toFixed(2)}%`,
       note: `Measured coverage ${Number(network.measurement_coverage_percentage || 0).toFixed(1)}% · unmonitored gaps excluded`,
     },
     {
-      label: "SERVICE CHECK SUCCESS RATE",
+      label: "Service check success rate",
       value: serviceSuccessRate,
       note: `${successes} successful / ${attempts} completed checks · sample-based, not time-based uptime`,
     },
     {
-      label: "DEGRADED QUALITY SAMPLES",
+      label: "Degraded quality samples",
       value: `${degradedSamples} / ${Number(quality.sample_count || 0)}`,
       note: `${Number(qualityIncidents.count || 0)} sustained quality incident(s) in the window`,
     },
     {
-      label: "CONFIRMED INCIDENTS",
+      label: "Confirmed incidents",
       value: String(totalIncidents),
       note: `${Number(networkIncidents.count || 0)} internet · ${Number(serviceIncidents.count || 0)} service · ${Number(qualityIncidents.count || 0)} quality`,
     },
