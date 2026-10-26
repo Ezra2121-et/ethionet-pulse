@@ -27,3 +27,32 @@ class ConnectivityCheck(Base):
     is_up = Column(Boolean, nullable=False)
     latency_ms = Column(Float, nullable=True)
     error_message = Column(String(255), nullable=True)
+
+
+
+class ServiceCheck(Base):
+    """Stores a scheduled HTTP(S) service probe without URL secrets."""
+    __tablename__ = "service_checks"
+
+    id = Column(Integer, primary_key=True, index=True)
+    timestamp = Column(DateTime(timezone=True), server_default=func.now(), index=True)
+    service_url = Column(String(512), nullable=False, index=True)
+    is_up = Column(Boolean, nullable=False)
+    probe_completed = Column(Boolean, nullable=False, default=True)
+    http_status_code = Column(Integer, nullable=True)
+    response_time_ms = Column(Float, nullable=True)
+    error_message = Column(String(255), nullable=True)
+
+
+class ServiceOutage(Base):
+    """Stores confirmed outage transitions for an individual HTTP service."""
+    __tablename__ = "service_outages"
+
+    id = Column(Integer, primary_key=True, index=True)
+    service_url = Column(String(512), nullable=False, index=True)
+    start_time = Column(DateTime(timezone=True), nullable=False, index=True)
+    end_time = Column(DateTime(timezone=True), nullable=True)
+    duration_seconds = Column(Integer, nullable=True)
+    is_resolved = Column(Boolean, nullable=False, default=False, index=True)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
