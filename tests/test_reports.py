@@ -102,6 +102,8 @@ class ReliabilityReportTests(unittest.IsolatedAsyncioTestCase):
         async with self.sessions() as session:
             response = await export_csv(hours=24, db=session)
 
+        csv_rows = list(csv.reader(io.StringIO(response.body.decode("utf-8"))))
+        self.assertTrue(all(len(row) == len(csv_rows[0]) for row in csv_rows))
         rows = list(csv.DictReader(io.StringIO(response.body.decode("utf-8"))))
         record_types = {row["record_type"] for row in rows}
         self.assertTrue({
