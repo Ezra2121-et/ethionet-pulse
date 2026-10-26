@@ -1,6 +1,6 @@
 import unittest
 
-from app.monitoring.diagnostics import classify_diagnosis
+from app.monitoring.diagnostics import classify_diagnosis, _safe_service_url
 
 
 def target(status, completed=True):
@@ -79,6 +79,14 @@ class DiagnosisTests(unittest.TestCase):
             service_checks=[service("online"), service("unhealthy")],
         )
         self.assertEqual(result["code"], "partial_service_availability")
+
+    def test_service_url_display_hides_credentials_query_and_fragment(self):
+        safe = _safe_service_url(
+            "https://user:password@example.com/health?token=secret#private"
+        )
+        self.assertEqual(safe, "https://example.com/health")
+        self.assertNotIn("password", safe)
+        self.assertNotIn("secret", safe)
 
 
 if __name__ == "__main__":
