@@ -6,6 +6,7 @@ import hmac
 import re
 import secrets
 import time
+from pathlib import Path
 from urllib.parse import parse_qs, urlencode
 
 import httpx
@@ -22,7 +23,7 @@ from app.models import User
 
 auth_router = APIRouter(tags=["authentication"])
 web_router = APIRouter(tags=["web pages"])
-templates = Jinja2Templates(directory="app/templates")
+templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 SCRYPT_N = 2**14
@@ -121,6 +122,7 @@ async def require_authenticated_user(
 def _auth_context(request: Request, message: str | None = None) -> dict:
     return {
         "request": request,
+        "app_name": settings.APP_NAME,
         "csrf_token": _csrf_token(request),
         "message": message or request.session.pop("flash_message", None),
         "contact_email": settings.CONTACT_EMAIL.strip(),
@@ -404,6 +406,7 @@ async def _render_private_page(
         name=template_name,
         context={
             "request": request,
+            "app_name": settings.APP_NAME,
             "current_user": user,
             "csrf_token": _csrf_token(request),
             "page_key": page_key,
