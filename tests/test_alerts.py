@@ -2,7 +2,7 @@ import unittest
 from unittest.mock import patch
 
 from app.config import settings
-from app.monitoring.alerts import format_outage_message
+from app.monitoring.alerts import format_outage_message, send_outage_alert
 
 
 class AlertMessageTests(unittest.TestCase):
@@ -25,6 +25,20 @@ class AlertMessageTests(unittest.TestCase):
         })
         self.assertIn("connectivity recovered", message)
         self.assertIn("2m 5s", message)
+
+
+class AlertDispatchTests(unittest.IsolatedAsyncioTestCase):
+    async def test_disabled_alerts_do_not_contact_telegram(self):
+        from app.monitoring import alerts
+
+        with (
+            patch.object(settings, "ENABLE_TELEGRAM_ALERTS", False),
+            patch.object(alerts.httpx, "AsyncClient") as client,
+        ):
+            result = await send_outage_alert({"event": "outage_started"})
+
+        self.assertFalse(result)
+        client.assert_not_called()
 
 
 if __name__ == "__main__":
