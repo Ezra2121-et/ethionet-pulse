@@ -873,3 +873,51 @@ td .status-chip { font-size: 9px; }
   .service-incident { gap: 8px; }
   .service-incident-side { max-width: 92px; }
 }
+
+
+/* Network quality telemetry */
+.quality-panel { margin-top: 19px; }
+.quality-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  padding: 0 20px 18px;
+}
+.quality-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid #25344a;
+  border-radius: 10px;
+  background: #0e1725;
+}
+.quality-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.quality-target {
+  color: #e0e8f5;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+.quality-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #a8b5c8;
+  font-size: 10px;
+}
+.quality-metrics span {
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: #192536;
+}
+@media (max-width: 600px) {
+  .quality-list { padding-left: 14px; padding-right: 14px; }
+  .quality-card-top { flex-direction: column; }
+}
