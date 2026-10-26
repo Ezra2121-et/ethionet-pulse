@@ -7,3 +7,4 @@ apscheduler==3.10.4
 aiosqlite==0.20.0
 pydantic-settings==2.5.2
 SQLAlchemy[asyncio]==2.0.55
+itsdangerous==2.2.0
