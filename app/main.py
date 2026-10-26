@@ -10,6 +10,7 @@ from fastapi.templating import Jinja2Templates
 from app.config import settings
 from app.database import Base, engine
 from app.monitoring.checker import run_connectivity_checks
+from app.monitoring.services import run_service_checks
 from app.api.routes import router
 from app.api.statistics import router as statistics_router
 from app.api.reports import router as reports_router
@@ -39,12 +40,28 @@ async def lifespan(app: FastAPI):
             "Initial connectivity check failed; the API will still start."
         )
 
+    try:
+        await run_service_checks()
+    except Exception:
+        logger.exception(
+            "Initial HTTP service check failed; the API will still start."
+        )
+
     scheduler = AsyncIOScheduler(timezone="UTC")
     scheduler.add_job(
         run_connectivity_checks,
         trigger="interval",
         seconds=max(5, settings.CHECK_INTERVAL_SECONDS),
         id="connectivity_checks",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        run_service_checks,
+        trigger="interval",
+        seconds=max(5, settings.CHECK_INTERVAL_SECONDS),
+        id="http_service_checks",
         replace_existing=True,
         max_instances=1,
         coalesce=True,
