@@ -16,6 +16,12 @@ class Settings(BaseSettings):
     CHECK_INTERVAL_SECONDS: int = 30
     INTERNET_TARGETS: str = "1.1.1.1,8.8.8.8,9.9.9.9"
     REQUEST_TIMEOUT_SECONDS: int = 5
+    DNS_TEST_HOSTS: str = "example.com,cloudflare.com"
+    SERVICE_URLS: str = ""
+
+    # An outage is confirmed after this many consecutive failed check rounds.
+    OUTAGE_FAILURE_THRESHOLD: int = 2
+    OUTAGE_RECOVERY_THRESHOLD: int = 2
 
     # Telegram (optional)
     TELEGRAM_BOT_TOKEN: str = ""
@@ -24,8 +30,18 @@ class Settings(BaseSettings):
 
     @property
     def targets_list(self) -> List[str]:
-        """Convert the comma-separated targets into a clean list"""
+        """Convert the comma-separated targets into a clean list."""
         return [t.strip() for t in self.INTERNET_TARGETS.split(",") if t.strip()]
+
+    @property
+    def dns_test_hosts_list(self) -> List[str]:
+        """Return DNS names that should resolve during a diagnosis."""
+        return [host.strip() for host in self.DNS_TEST_HOSTS.split(",") if host.strip()]
+
+    @property
+    def service_urls_list(self) -> List[str]:
+        """Return optional HTTP(S) services to check during diagnosis."""
+        return [url.strip() for url in self.SERVICE_URLS.split(",") if url.strip()]
 
     class Config:
         env_file = ".env"
