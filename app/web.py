@@ -263,6 +263,7 @@ async def google_login(request: Request):
         return _flash_redirect(
             request,
             "Google sign-in is not configured yet. Set GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET in .env.",
+            "/register" if request.query_params.get("from") == "register" else "/login",
         )
 
     state = secrets.token_urlsafe(32)
