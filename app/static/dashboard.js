@@ -792,14 +792,14 @@ function setPageError(message) {
 }
 
 function timestampLabel() {
-  return \`Updated \${new Date().toLocaleTimeString([], {
+  return `Updated ${new Date().toLocaleTimeString([], {
     hour: "2-digit", minute: "2-digit", second: "2-digit"
-  })}\`;
+  })}`;
 }
 
 function renderOverviewPage(status, statistics, history, outages, serviceOutages, qualityIncidents) {
   const state = status.internet_status || "unknown";
-  $("connection-banner").className = \`status-banner status-\${state}\`;
+  $("connection-banner").className = `status-banner status-${state}`;
   $("status-icon").textContent = state === "online" ? "✓" : state === "offline" ? "!" : "?";
   $("status-kicker").textContent = state === "online" ? "CONNECTION HEALTHY" :
     state === "offline" ? "CONNECTION INTERRUPTED" : "MONITORING STATUS";
@@ -818,12 +818,12 @@ function renderOverviewPage(status, statistics, history, outages, serviceOutages
   const online = targets.filter((item) => item.status === "online").length;
   $("banner-online-count").textContent = online;
   $("reachable-count").textContent = online;
-  $("reachable-detail").textContent = \`\${online} of \${targets.length} configured targets responding\`;
+  $("reachable-detail").textContent = `${online} of ${targets.length} configured targets responding`;
 
   const latency = statistics.latency || {};
   $("avg-latency").textContent = formatLatency(latency.average_ms);
   $("latency-detail").textContent = latency.sample_count
-    ? \`\${latency.sample_count} recorded samples · min \${formatLatency(latency.minimum_ms)}\`
+    ? `${latency.sample_count} recorded samples · min ${formatLatency(latency.minimum_ms)}`
     : "No successful latency samples yet";
 
   const incidentRows = [
@@ -845,7 +845,7 @@ function renderServiceHistory(payload) {
   if (!body) return;
   body.replaceChildren();
   if ($("service-history-count")) {
-    $("service-history-count").textContent = \`\${rows.length} records\`;
+    $("service-history-count").textContent = `${rows.length} records`;
   }
   if (!rows.length) {
     const tr = element("tr");
@@ -874,7 +874,7 @@ function renderQualityHistory(payload) {
   if (!body) return;
   body.replaceChildren();
   if ($("quality-history-count")) {
-    $("quality-history-count").textContent = \`\${rows.length} samples\`;
+    $("quality-history-count").textContent = `${rows.length} samples`;
   }
   if (!rows.length) {
     const tr = element("tr");
@@ -891,7 +891,7 @@ function renderQualityHistory(payload) {
     row.append(
       element("td", "", item.target || "—"),
       state,
-      element("td", "", item.packet_loss_percent == null ? "—" : \`\${Number(item.packet_loss_percent).toFixed(1)}%\`),
+      element("td", "", item.packet_loss_percent == null ? "—" : `${Number(item.packet_loss_percent).toFixed(1)}%`),
       element("td", "", formatLatency(item.latency_avg_ms)),
       element("td", "", formatLatency(item.latency_jitter_ms)),
       element("td", "", formatDateTime(item.timestamp))
@@ -926,7 +926,7 @@ async function refreshCurrentPage() {
         getJson("/api/quality-incidents?limit=50"),
       ]);
       renderOverviewPage(status, statistics, history, outages, serviceOutages, qualityIncidents);
-      setUpdated(status.last_checked ? \`Last check \${formatClock(status.last_checked)}\` : timestampLabel());
+      setUpdated(status.last_checked ? `Last check ${formatClock(status.last_checked)}` : timestampLabel());
     } else if (page === "connectivity") {
       const [status, history, statistics] = await Promise.all([
         getJson("/api/status"),
@@ -934,7 +934,7 @@ async function refreshCurrentPage() {
         getJson("/api/statistics?hours=24"),
       ]);
       renderTargets(status.targets || []);
-      if ($("target-count")) $("target-count").textContent = \`\${(status.targets || []).length} targets\`;
+      if ($("target-count")) $("target-count").textContent = `${(status.targets || []).length} targets`;
       renderHistory(history);
       renderStatistics(statistics);
       setUpdated(timestampLabel());
