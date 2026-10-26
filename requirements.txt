@@ -8,4 +8,4 @@ aiosqlite==0.20.0
 pydantic-settings==2.5.2
 SQLAlchemy[asyncio]==2.0.55
 itsdangerous==2.2.0
-google-auth==2.62.0
+google-auth[requests]==2.62.0
