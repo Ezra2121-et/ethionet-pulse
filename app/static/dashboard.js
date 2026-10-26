@@ -75,15 +75,23 @@ function statusLabel(status) {
     offline: "Offline",
     error: "Probe error",
     not_checked: "Not checked",
+    unavailable: "Unavailable",
+    resolved: "DNS resolved",
+    failed: "DNS lookup failed",
+    unhealthy: "HTTP unhealthy",
   }[status] || "Unknown";
 }
 
 function chipClass(status) {
   return {
     online: "chip-success",
+    resolved: "chip-success",
     offline: "chip-danger",
+    failed: "chip-danger",
+    unhealthy: "chip-warning",
     error: "chip-warning",
     not_checked: "chip-muted",
+    unavailable: "chip-muted",
   }[status] || "chip-muted";
 }
 
@@ -419,32 +427,63 @@ function renderDiagnosis(payload) {
   const root = $("diagnosis-result");
   root.replaceChildren();
 
-  const heading = element("h3", "diagnosis-title", payload.diagnosis.title);
-  const summary = element("p", "diagnosis-summary", payload.diagnosis.summary);
-  const next = element("p", "diagnosis-next", `Recommended next step: ${payload.diagnosis.next_step}`);
-  root.append(heading, summary, next);
+  const diagnosis = payload.diagnosis || {};
+  root.append(
+    element("h3", "diagnosis-title", diagnosis.title || "Diagnosis complete"),
+    element("p", "diagnosis-summary", diagnosis.summary || "No summary is available."),
+    element("p", "diagnosis-next", `Recommended next step: ${diagnosis.next_step || "Review the check details and try again."}`)
+  );
 
-  const probes = element("div", "diagnosis-probes");
-  const gateway = payload.gateway || {};
-  probes.append(makeProbeCard("Local gateway", gateway));
-  for (const target of (payload.external_targets || [])) {
-    probes.append(makeProbeCard(target.target, target));
-  }
-  root.append(probes);
+  appendDiagnosisGroup(root, "Gateway and public targets", [
+    { label: "Local gateway", probe: payload.gateway || {} },
+    ...(payload.external_targets || []).map((probe) => ({
+      label: probe.target || "Public target",
+      probe,
+    })),
+  ]);
 
-  const note = element("p", "diagnosis-note", payload.note || "Results may be affected by ICMP filtering.");
-  root.append(note);
+  appendDiagnosisGroup(root, "DNS resolution", (payload.dns_checks || []).map((probe) => ({
+    label: probe.host || "DNS hostname",
+    probe,
+    kind: "dns",
+  })));
+
+  appendDiagnosisGroup(root, "Configured HTTP services", (payload.service_checks || []).map((probe) => ({
+    label: probe.url || "HTTP service",
+    probe,
+    kind: "http",
+  })));
+
+  root.append(element("p", "diagnosis-note", payload.note || "These checks are clues, not proof of root cause."));
 }
 
-function makeProbeCard(label, probe) {
+function appendDiagnosisGroup(root, title, items) {
+  if (!items.length) return;
+  root.append(element("h4", "diagnosis-group-title", title));
+  const grid = element("div", "diagnosis-probes");
+  for (const item of items) {
+    grid.append(makeProbeCard(item.label, item.probe || {}, item.kind));
+  }
+  root.append(grid);
+}
+
+function makeProbeCard(label, probe, kind) {
   const card = element("div", "diagnosis-probe");
   card.append(
-    element("strong", "", label || "Local gateway"),
-    makeChip(probe.status || "error"),
-    element("small", "", probe.latency_ms === null || probe.latency_ms === undefined
-      ? (probe.error_message || "No response time available")
-      : formatLatency(probe.latency_ms))
+    element("strong", "", label || "Target"),
+    makeChip(probe.status || "error")
   );
+
+  let detail = probe.error_message || "No additional details";
+  if (kind === "dns" && probe.status === "resolved") {
+    detail = `${probe.address_count} address(es) resolved`;
+  } else if (kind === "http" && probe.http_status_code !== null && probe.http_status_code !== undefined) {
+    detail = `HTTP ${probe.http_status_code}`;
+  } else if (probe.latency_ms !== null && probe.latency_ms !== undefined) {
+    detail = formatLatency(probe.latency_ms);
+  }
+
+  card.append(element("small", "", detail));
   return card;
 }
 
@@ -453,7 +492,7 @@ async function runDiagnosis() {
   const root = $("diagnosis-result");
   button.disabled = true;
   button.textContent = "Checking…";
-  root.replaceChildren(element("p", "diagnosis-placeholder", "Checking the local gateway and configured public targets…"));
+  root.replaceChildren(element("p", "diagnosis-placeholder", "Checking gateway, public targets, DNS and configured HTTP services…"));
   try {
     const result = await getJson("/api/diagnose");
     renderDiagnosis(result);
