@@ -41,6 +41,34 @@ def format_outage_message(event: dict[str, Any]) -> str:
             f"Recorded outage duration: {duration_label}"
         )
 
+    if kind == "service_outage_started":
+        timestamp = event.get("start_time") or "time unavailable"
+        service_url = event.get("service_url") or "configured HTTP service"
+        return (
+            f"🚨 {name}: monitored service is down\\n"
+            f"Service: {service_url}\\n"
+            f"Confirmed: {timestamp}\\n"
+            "The endpoint failed the required consecutive checks. "
+            "Verify the service and network before concluding the cause."
+        )
+
+    if kind == "service_outage_recovered":
+        timestamp = event.get("end_time") or "time unavailable"
+        service_url = event.get("service_url") or "configured HTTP service"
+        duration = max(0, int(event.get("duration_seconds") or 0))
+        minutes, seconds = divmod(duration, 60)
+        hours, minutes = divmod(minutes, 60)
+        duration_label = (
+            f"{hours}h {minutes}m {seconds}s" if hours
+            else f"{minutes}m {seconds}s"
+        )
+        return (
+            f"✅ {name}: monitored service recovered\\n"
+            f"Service: {service_url}\\n"
+            f"Recovered: {timestamp}\\n"
+            f"Recorded incident duration: {duration_label}"
+        )
+
     return f"{name}: monitoring event recorded."
 
 
