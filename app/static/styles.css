@@ -758,3 +758,299 @@ td .status-chip { font-size: 11px; }
   .reliability-card, .reliability-card:first-child, .reliability-card:last-child { padding: 15px 0; border-left: 0; }
   .reliability-card:nth-child(n+2) { border-top: 1px solid #e7ede8; }
 }
+
+
+/* Theme switcher: dark is the default; light mode reuses the base palette above. */
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --page: #0c1210;
+  --white: #121b17;
+  --surface: #141e19;
+  --line: #293a31;
+  --line-strong: #3a5144;
+  --ink: #e7efe9;
+  --muted: #a0b0a5;
+  --green: #68c99e;
+  --green-light: #1a382b;
+  --blue: #8ab7f5;
+  --purple: #c0a1ef;
+  --amber: #e7bd70;
+  --red: #ff8d91;
+  background: var(--page);
+  color: var(--ink);
+}
+html[data-theme="dark"] body {
+  background: var(--page);
+  color: #e7efe9;
+}
+html[data-theme="dark"] .site-header {
+  background: rgba(16, 24, 20, .96);
+  border-bottom-color: #293830;
+  box-shadow: 0 5px 22px rgba(0, 0, 0, .12);
+}
+html[data-theme="dark"] .brand-name { color: #eaf2ec; }
+html[data-theme="dark"] .brand-name span { color: #76d4aa; }
+html[data-theme="dark"] .brand-mark {
+  color: #76d4aa;
+  background: #19372a;
+  border-color: #2c4c3b;
+}
+html[data-theme="dark"] .nav-link { color: #a6b5ab; }
+html[data-theme="dark"] .nav-link:hover {
+  color: #edf7f0;
+  background: #1b2921;
+}
+html[data-theme="dark"] .nav-link.active {
+  color: #bdf0d2;
+  background: #1b382b;
+  border-color: #2c5140;
+}
+html[data-theme="dark"] .nav-api { color: #b8c9bd; }
+html[data-theme="dark"] .header-status {
+  color: #9aada0;
+  border-left-color: #2c3b32;
+}
+html[data-theme="dark"] .theme-toggle {
+  color: #d8e8dc;
+  background: #1b2921;
+  border-color: #34483b;
+}
+html[data-theme="dark"] .theme-toggle:hover {
+  color: #f1fff5;
+  background: #23362a;
+  border-color: #4e755e;
+}
+html[data-theme="dark"] .main-content { color: #e7efe9; }
+html[data-theme="dark"] .topbar .eyebrow { color: #8bd9b2; }
+html[data-theme="dark"] h1 { color: #edf4ee; }
+html[data-theme="dark"] .heading-period { color: #79d9ae; }
+html[data-theme="dark"] .page-subtitle,
+html[data-theme="dark"] .panel-subtitle { color: #a0b0a5; }
+html[data-theme="dark"] .last-updated { color: #a0b0a5; }
+html[data-theme="dark"] .refresh-button {
+  color: #08140d;
+  background: #74d2a5;
+  border-color: #74d2a5;
+}
+html[data-theme="dark"] .refresh-button:hover {
+  color: #061109;
+  background: #8be0b7;
+  border-color: #8be0b7;
+}
+html[data-theme="dark"] #export-button {
+  color: #d8eade;
+  background: #18251d;
+  border-color: #3b5042;
+}
+html[data-theme="dark"] #export-button:hover {
+  background: #213329;
+  border-color: #52745e;
+}
+html[data-theme="dark"] .status-banner {
+  background: #141e19;
+  border-color: #34463b;
+  border-left-color: #7d9a87;
+}
+html[data-theme="dark"] .status-banner.status-online { border-left-color: #5dcc96; }
+html[data-theme="dark"] .status-banner.status-offline {
+  background: #241918;
+  border-color: #593434;
+  border-left-color: #f07878;
+}
+html[data-theme="dark"] .status-banner.status-unknown { border-left-color: #88978d; }
+html[data-theme="dark"] .status-emblem {
+  color: #8ce0b3;
+  background: #1d3a2b;
+}
+html[data-theme="dark"] .status-offline .status-emblem {
+  color: #ff9a9a;
+  background: #442323;
+}
+html[data-theme="dark"] .status-unknown .status-emblem {
+  color: #c2cbc5;
+  background: #27312b;
+}
+html[data-theme="dark"] .status-copy .eyebrow { color: #a7c0af; }
+html[data-theme="dark"] .status-copy h2 { color: #edf5ef; }
+html[data-theme="dark"] .status-copy > p:last-child { color: #a8b7ad; }
+html[data-theme="dark"] .banner-side { border-left-color: #34463a; }
+html[data-theme="dark"] .banner-side strong { color: #edf5ef; }
+html[data-theme="dark"] .banner-side span { color: #a0b0a5; }
+
+html[data-theme="dark"] .metrics-grid {
+  background: #141e19;
+  border-color: #2d3d33;
+}
+html[data-theme="dark"] .metric-card { background: transparent; border-right-color: #2d3d33; }
+html[data-theme="dark"] .metric-heading { color: #a8b7ad; }
+html[data-theme="dark"] .metric-icon { background: #203329; }
+html[data-theme="dark"] .icon-teal { color: #79d9ae; }
+html[data-theme="dark"] .icon-blue { color: #8ab7f5; }
+html[data-theme="dark"] .icon-purple { color: #c0a1ef; }
+html[data-theme="dark"] .icon-amber { color: #e7bd70; }
+html[data-theme="dark"] .metric-value { color: #f0f6f1; }
+html[data-theme="dark"] .metric-foot { color: #9aa99f; }
+
+html[data-theme="dark"] .panel {
+  background: #141e19;
+  border-color: #2b3b32;
+  box-shadow: none;
+}
+html[data-theme="dark"] .panel h2,
+html[data-theme="dark"] .panel h3 { color: #e9f1eb; }
+html[data-theme="dark"] .range-label,
+html[data-theme="dark"] .count-label {
+  color: #b6c4ba;
+  background: #1b2820;
+  border-color: #34463a;
+}
+html[data-theme="dark"] .chart-empty { background: #141e19; }
+html[data-theme="dark"] .empty-icon { color: #71c99c; }
+html[data-theme="dark"] .chart-empty strong { color: #dbe8de; }
+html[data-theme="dark"] .chart-empty span:last-child { color: #a1b0a6; }
+html[data-theme="dark"] .chart-footer {
+  color: #a1b0a6;
+  border-top-color: #2b3b32;
+}
+html[data-theme="dark"] .legend-dot { background: #76d4a5; }
+
+html[data-theme="dark"] .target-card { border-top-color: #293a31; }
+html[data-theme="dark"] .target-mark {
+  color: #92dfb5;
+  background: #1b382a;
+}
+html[data-theme="dark"] .target-name { color: #e3eee6; }
+html[data-theme="dark"] .target-purpose { color: #9caca1; }
+html[data-theme="dark"] .target-latency { color: #e4eee7; }
+html[data-theme="dark"] .target-latency small { color: #9caca1; }
+
+html[data-theme="dark"] .chip-success { color: #8fe0b3; background: #1b3829; }
+html[data-theme="dark"] .chip-danger { color: #ff9a9a; background: #432525; }
+html[data-theme="dark"] .chip-warning { color: #f1cb80; background: #3a2e19; }
+html[data-theme="dark"] .chip-muted { color: #c1ccc5; background: #29332d; }
+html[data-theme="dark"] .panel-footnote {
+  color: #a0b0a5;
+  background: #111a15;
+  border-top-color: #2b3b32;
+}
+html[data-theme="dark"] .outage-item,
+html[data-theme="dark"] .service-incident { border-top-color: #293a31; }
+html[data-theme="dark"] .outage-marker { color: #f0c77a; background: #3a2e1b; }
+html[data-theme="dark"] .outage-marker.resolved { color: #8bdfb1; background: #1b3829; }
+html[data-theme="dark"] .outage-title { color: #e4eee7; }
+html[data-theme="dark"] .outage-meta { color: #9eada3; }
+html[data-theme="dark"] .outage-duration { color: #dfe9e2; }
+
+html[data-theme="dark"] .table-wrap { background: #141e19; }
+html[data-theme="dark"] thead { background: #18231c; }
+html[data-theme="dark"] th {
+  color: #a4b4a9;
+  border-top-color: #2b3b32;
+  border-bottom-color: #2b3b32;
+}
+html[data-theme="dark"] td {
+  color: #b9c7bd;
+  border-bottom-color: #25352b;
+}
+html[data-theme="dark"] td:first-child { color: #e2ece5; }
+
+html[data-theme="dark"] .service-card,
+html[data-theme="dark"] .quality-card,
+html[data-theme="dark"] .reliability-card {
+  background: transparent;
+  border-color: #293a31;
+}
+html[data-theme="dark"] .service-card { border-top-color: #293a31; }
+html[data-theme="dark"] .service-url,
+html[data-theme="dark"] .service-incident-url { color: #e3eee6; }
+html[data-theme="dark"] .service-metrics { color: #bdc9c0; }
+html[data-theme="dark"] .service-metrics span,
+html[data-theme="dark"] .quality-metrics span {
+  color: #bdc9c0;
+  background: #1b2820;
+  border-color: #2c3d32;
+}
+html[data-theme="dark"] .service-meta { color: #a0b0a5; }
+html[data-theme="dark"] .service-error { color: #edc578; }
+html[data-theme="dark"] .service-empty { color: #a1b0a6; border-top-color: #293a31; }
+html[data-theme="dark"] .service-incidents-heading { border-top-color: #2b3b32; }
+html[data-theme="dark"] .quality-card,
+html[data-theme="dark"] .quality-card:first-child,
+html[data-theme="dark"] .quality-card:last-child { border-left-color: #293a31; }
+html[data-theme="dark"] .quality-target { color: #e2ece5; }
+html[data-theme="dark"] .service-incident-side .outage-duration { color: #dce8df; }
+
+html[data-theme="dark"] .diagnosis-placeholder,
+html[data-theme="dark"] .diagnosis-summary,
+html[data-theme="dark"] .diagnosis-note { color: #a1b0a6; }
+html[data-theme="dark"] .diagnosis-error { color: #ff9696; }
+html[data-theme="dark"] .diagnosis-title { color: #edf4ee; }
+html[data-theme="dark"] .diagnosis-next {
+  color: #c7dfce;
+  background: #192b20;
+  border-left-color: #65bd8f;
+}
+html[data-theme="dark"] .diagnosis-group-title { color: #b2c4b7; }
+html[data-theme="dark"] .diagnosis-probe {
+  background: #18231c;
+  border-color: #2c3c32;
+}
+html[data-theme="dark"] .diagnosis-probe strong { color: #e1ece4; }
+html[data-theme="dark"] .diagnosis-probe small { color: #a1b0a6; }
+
+html[data-theme="dark"] .reliability-card { border-left-color: #2c3c32; }
+html[data-theme="dark"] .reliability-label { color: #afc1b4; }
+html[data-theme="dark"] .reliability-value { color: #eaf3ec; }
+html[data-theme="dark"] .reliability-note { color: #a0b0a5; }
+
+html[data-theme="dark"] .page-footer {
+  color: #8e9f94;
+  border-top-color: #2a3930;
+}
+html[data-theme="dark"] .footer-separator { color: #64756a; }
+
+/* A clear button states which mode the next click will switch to. */
+.theme-toggle {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 0 11px;
+  border: 1px solid #d5e0d8;
+  border-radius: 8px;
+  color: #345a44;
+  background: #fff;
+  font-size: 12px;
+  font-weight: 650;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+.theme-toggle:hover { background: #f1f7f2; border-color: #b9d0c0; }
+.theme-toggle-icon { font-size: 15px; line-height: 1; }
+
+html[data-theme="dark"] .theme-toggle {
+  color: #d8e8dc;
+  background: #1b2921;
+  border-color: #34483b;
+}
+html[data-theme="dark"] .theme-toggle:hover {
+  color: #f1fff5;
+  background: #23362a;
+  border-color: #4e755e;
+}
+
+@media (max-width: 1150px) {
+  html[data-theme="dark"] .metric-card { border-right-color: #2d3d33; }
+}
+@media (max-width: 600px) {
+  html[data-theme="dark"] .metric-card:nth-child(n+3),
+  html[data-theme="dark"] .metric-card:nth-child(n+2) { border-top-color: #2d3d33; }
+  html[data-theme="dark"] .reliability-card:nth-child(n+3),
+  html[data-theme="dark"] .reliability-card:nth-child(n+2) { border-top-color: #293a31; }
+  html[data-theme="dark"] .reliability-card,
+  html[data-theme="dark"] .reliability-card:first-child,
+  html[data-theme="dark"] .reliability-card:last-child { border-left-color: #293a31; }
+}
+
