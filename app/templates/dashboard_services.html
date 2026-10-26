@@ -1,0 +1,22 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="panel service-monitoring-panel">
+  <div class="panel-heading">
+    <div><h2>Monitored HTTP services</h2><p class="panel-subtitle">Configured websites and health endpoints checked on the monitoring schedule.</p></div>
+    <span class="count-label" id="service-count">0 services</span>
+  </div>
+  <div class="service-list" id="service-list" aria-live="polite"><div class="loading-row">Loading configured services…</div></div>
+  <p class="panel-footnote">HTTP 2xx–3xx responses count as healthy. This checks endpoint availability, not every function inside an application.</p>
+</section>
+
+<section class="panel section-gap">
+  <div class="panel-heading">
+    <div><h2>Recent service checks</h2><p class="panel-subtitle">Recorded HTTP status codes and response times.</p></div>
+    <span class="count-label" id="service-history-count">Loading…</span>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>SERVICE</th><th>RESULT</th><th>HTTP STATUS</th><th>RESPONSE TIME</th><th>LAST CHECKED</th></tr></thead>
+    <tbody id="service-history-list"><tr><td colspan="5" class="loading-row">Loading service history…</td></tr></tbody>
+  </table></div>
+</section>
+{% endblock %}
