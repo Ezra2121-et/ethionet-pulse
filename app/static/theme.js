@@ -14,8 +14,8 @@
       .forEach((button) => {
         const action = isDark ? "light" : "dark";
         const label = isDark ? "Light mode" : "Dark mode";
-        button.setAttribute("aria-label", \`Switch to \${action} theme\`);
-        button.title = \`Switch to \${action} theme\`;
+        button.setAttribute("aria-label", `Switch to ${action} theme`);
+        button.title = `Switch to ${action} theme`;
         const icon = button.querySelector(".theme-toggle-icon");
         const text = button.querySelector("[data-theme-label], #theme-toggle-label, #theme-toggle-settings-label");
         if (icon) icon.textContent = isDark ? "☀" : "☾";
