@@ -39,7 +39,9 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 2. The monitor pings each configured target and records the timestamp, reachability, latency when available, and any error message.
 3. Records are stored in SQLite and used to build status, history, outage, and statistics responses.
 4. The dashboard requests the API and displays current status, latency, reachable targets, recent checks, and outage information.
-5. A CSV endpoint exports measurements and relevant outage records.
+5. An on-demand diagnostic compares the local gateway, public targets, DNS resolution, and any configured HTTP service URLs.
+6. Outages are recorded only after consecutive complete failed rounds; recovery requires consecutive successful rounds. Optional Telegram alerts are sent on those transitions.
+7. A CSV endpoint exports measurements and relevant outage records.
 
 ### A note on availability statistics
 
@@ -89,7 +91,7 @@ With the virtual environment activated and dependencies installed, run the stand
 python -m unittest discover -s tests -v
 ```
 
-The tests cover connectivity-round classification and verify that long gaps between measurements are left unmonitored rather than counted as uptime.
+The tests cover monitoring persistence, outage start/recovery thresholds, alert-message formatting, diagnostic scenarios, and the rule that long measurement gaps must not be counted as uptime.
 
 ## Connectivity diagnosis
 
@@ -117,6 +119,8 @@ Edit the local `.env` file before launching the application:
 | `OUTAGE_FAILURE_THRESHOLD` | Consecutive complete failed rounds needed to confirm an outage | `2` |
 | `OUTAGE_RECOVERY_THRESHOLD` | Consecutive successful rounds needed to confirm recovery | `2` |
 | `ENABLE_TELEGRAM_ALERTS` | Enable Telegram outage/recovery notifications | `false` |
+| `TELEGRAM_BOT_TOKEN` | Private Telegram bot token | empty |
+| `TELEGRAM_CHAT_ID` | Telegram destination chat ID | empty |
 
 Keep `.env` and local database files private; they are for local configuration and runtime data, not source control.
 
@@ -161,7 +165,7 @@ See [the presentation video script](docs/DEMO_SCRIPT.md) for a concise speaking 
 ## Known limitations and future work
 
 - ICMP ping can be blocked by a destination or network even when other services work; a failed ping alone is not proof that all internet access is unavailable.
-- This prototype is intended to run on a local host. A public, managed deployment, user accounts, and long-term remote alerting are not part of the demonstrated baseline.
+- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
 - HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
 - Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
