@@ -422,7 +422,7 @@ async function refreshDashboard() {
   icon.classList.add("spinning");
 
   try {
-    const [status, history, outages] = await Promise.all([
+    const [status, history, outages, statistics] = await Promise.all([
       getJson("/api/status"),
       getJson("/api/history?limit=90"),
       getJson("/api/outages?limit=10"),
