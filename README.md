@@ -20,6 +20,8 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 - **Availability statistics** over a requested time window.
 - **Measurement coverage reporting** so missing data is not silently counted as uptime.
 - **CSV export** for sharing or further analysis.
+- **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and optional configured HTTP(S) services.
+- **Optional Telegram alerts** on confirmed outage start and recovery transitions, with consecutive-check thresholds to reduce transient false alarms.
 - **JSON API** with an interactive API explorer at `/docs`.
 - **Lightweight local deployment** with Python and a local database.
 
@@ -91,9 +93,11 @@ The tests cover connectivity-round classification and verify that long gaps betw
 
 ## Connectivity diagnosis
 
-The dashboard includes an on-demand **Run diagnosis** action. It compares a ping to the Linux default gateway with pings to configured public targets, then suggests what to investigate based on the results.
+The dashboard includes an on-demand **Run diagnosis** action. It compares a ping to the Linux default gateway with pings to configured public targets, checks hostnames using the system DNS resolver, and optionally requests configured HTTP(S) service URLs. Results include a cautious summary and a suggested next step.
 
-This is a troubleshooting aid, not definitive root-cause analysis. Routers, firewalls, or providers may block ICMP ping even when other traffic works. The diagnosis does not change stored monitoring history.
+Set `DNS_TEST_HOSTS` to a comma-separated list of hostnames. Set `SERVICE_URLS` to optional comma-separated HTTP(S) endpoints that matter to your organization, such as a public health-check URL. These diagnosis checks do not change stored monitoring history.
+
+This is a troubleshooting aid, not definitive root-cause analysis. Routers, firewalls, or providers may block ICMP ping even when other traffic works. DNS lookup and HTTP service errors also need interpretation in context.
 
 API endpoint: `GET /api/diagnose`.
 
@@ -108,8 +112,23 @@ Edit the local `.env` file before launching the application:
 | `CHECK_INTERVAL_SECONDS` | Time between check cycles | `30` |
 | `INTERNET_TARGETS` | Comma-separated hosts/IP addresses to check | `1.1.1.1,8.8.8.8,9.9.9.9` |
 | `REQUEST_TIMEOUT_SECONDS` | Per-target ping timeout | `5` |
+| `DNS_TEST_HOSTS` | Comma-separated hostnames for resolver checks | `example.com,cloudflare.com` |
+| `SERVICE_URLS` | Optional comma-separated HTTP(S) service URLs | empty |
+| `OUTAGE_FAILURE_THRESHOLD` | Consecutive complete failed rounds needed to confirm an outage | `2` |
+| `OUTAGE_RECOVERY_THRESHOLD` | Consecutive successful rounds needed to confirm recovery | `2` |
+| `ENABLE_TELEGRAM_ALERTS` | Enable Telegram outage/recovery notifications | `false` |
 
 Keep `.env` and local database files private; they are for local configuration and runtime data, not source control.
+
+### Enable Telegram alerts (optional)
+
+1. Create a Telegram bot using the official `@BotFather` account and copy its bot token.
+2. Open a chat with your bot and send `/start`.
+3. Obtain the chat ID using Telegram's Bot API `getUpdates` response for your bot, then keep it private.
+4. In your local `.env`, set `ENABLE_TELEGRAM_ALERTS=true`, `TELEGRAM_BOT_TOKEN=...`, and `TELEGRAM_CHAT_ID=...`.
+5. Restart EthioNet Pulse. Alerts are sent only when the database records a new confirmed outage or a recovery. Missing credentials or Telegram delivery failures are logged without stopping monitoring.
+
+Never commit your real bot token or private chat configuration to GitHub.
 
 ## API endpoints
 
@@ -143,7 +162,9 @@ See [the presentation video script](docs/DEMO_SCRIPT.md) for a concise speaking 
 
 - ICMP ping can be blocked by a destination or network even when other services work; a failed ping alone is not proof that all internet access is unavailable.
 - This prototype is intended to run on a local host. A public, managed deployment, user accounts, and long-term remote alerting are not part of the demonstrated baseline.
-- Possible next improvements include optional notifications, configurable target groups, multi-site monitoring, and packaging as a system service.
+- HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works.
+- Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
+- Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
 
 ## Author
 
