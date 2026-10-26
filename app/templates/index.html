@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f4f7f5">
+  <meta name="theme-color" content="#f5f7f5">
   <meta name="description"
         content="Network connectivity and outage monitoring dashboard.">
   <title>{{ app_name }} — Network Overview</title>
@@ -12,60 +12,37 @@
 </head>
 <body>
 <div class="app-shell">
-  <aside class="sidebar">
-    <a href="/" class="brand" aria-label="EthioNet Pulse home">
-      <span class="brand-mark">
-        <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
-          <path d="M6 22h7l4-10 7 17 4-9h6"
-                stroke="currentColor" stroke-width="2.7"
-                stroke-linecap="round" stroke-linejoin="round"/>
-          <circle cx="20" cy="20" r="17"
-                  stroke="currentColor" stroke-opacity=".32"/>
-        </svg>
-      </span>
-      <span class="brand-name">EthioNet<span>Pulse</span></span>
-    </a>
+  <header class="site-header">
+    <div class="site-header-inner">
+      <a href="/" class="brand" aria-label="EthioNet Pulse home">
+        <span class="brand-mark">
+          <svg viewBox="0 0 40 40" fill="none" aria-hidden="true">
+            <path d="M6 22h7l4-10 7 17 4-9h6"
+                  stroke="currentColor" stroke-width="2.7"
+                  stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="20" cy="20" r="17"
+                    stroke="currentColor" stroke-opacity=".32"/>
+          </svg>
+        </span>
+        <span class="brand-name">EthioNet<span>Pulse</span></span>
+      </a>
 
-    <p class="nav-label">Monitor</p>
-    <nav class="nav-links" aria-label="Main navigation">
-      <a class="nav-link active" href="#overview">
-        <span class="nav-symbol">◫</span> Overview
-      </a>
-      <a class="nav-link" href="#targets">
-        <span class="nav-symbol">⌁</span> Connectivity
-      </a>
-      <a class="nav-link" href="#diagnosis">
-        <span class="nav-symbol">⌕</span> Diagnosis
-      </a>
-      <a class="nav-link" href="#services">
-        <span class="nav-symbol">◎</span> Service monitoring
-      </a>
-      <a class="nav-link" href="#network-quality">
-        <span class="nav-symbol">⌁</span> Network quality
-      </a>
-      <a class="nav-link" href="#outages">
-        <span class="nav-symbol">◷</span> Outage history
-      </a>
-      <a class="nav-link" href="#reports">
-        <span class="nav-symbol">▤</span> Reliability report
-      </a>
-      <a class="nav-link" href="/docs" target="_blank" rel="noreferrer">
-        <span class="nav-symbol">⌘</span> API explorer
-        <span class="external-mark">↗</span>
-      </a>
-    </nav>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a class="nav-link active" href="#overview">Overview</a>
+        <a class="nav-link" href="#targets">Connectivity</a>
+        <a class="nav-link" href="#services">Services</a>
+        <a class="nav-link" href="#network-quality">Network quality</a>
+        <a class="nav-link" href="#outages">Outage history</a>
+        <a class="nav-link" href="#reports">Reliability</a>
+        <a class="nav-link nav-api" href="/docs" target="_blank" rel="noreferrer">API explorer ↗</a>
+      </nav>
 
-    <div class="sidebar-bottom">
-      <div class="sidebar-status">
-        <span class="status-dot"></span>
-        <div>
-          <strong>Monitoring service</strong>
-          <span>Local instance</span>
-        </div>
+      <div class="header-status">
+        <span class="status-dot" aria-hidden="true"></span>
+        <span>Monitor ready</span>
       </div>
-      <p class="sidebar-caption">Local monitoring workspace</p>
     </div>
-  </aside>
+  </header>
 
   <main class="main-content" id="overview">
     <header class="topbar">
