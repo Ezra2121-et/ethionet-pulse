@@ -202,7 +202,7 @@ async def export_csv(
             incident.peak_latency_ms if incident.peak_latency_ms is not None else "",
             "", "network_quality", utc_iso(incident.start_time),
             utc_iso(incident.end_time), duration, incident.is_resolved,
-            safe_text(incident.notes), "", "", 
+            safe_text(incident.notes), "", "",
             incident.peak_packet_loss_percent if incident.peak_packet_loss_percent is not None else "",
             "", incident.peak_latency_ms if incident.peak_latency_ms is not None else "",
             "", "", "", "",
