@@ -164,7 +164,7 @@ async def check_http_service(url: str, timeout_seconds: float = 5.0) -> dict[str
         elapsed = round((time.perf_counter() - started) * 1000, 2)
         healthy = 200 <= response.status_code < 400
         return {
-            "url": url,
+            "url": _safe_service_url(url),
             "host": parsed.hostname,
             "status": "online" if healthy else "unhealthy",
             "http_status_code": response.status_code,
@@ -174,7 +174,7 @@ async def check_http_service(url: str, timeout_seconds: float = 5.0) -> dict[str
         }
     except httpx.TimeoutException:
         return {
-            "url": url,
+            "url": _safe_service_url(url),
             "host": parsed.hostname,
             "status": "offline",
             "http_status_code": None,
@@ -184,12 +184,12 @@ async def check_http_service(url: str, timeout_seconds: float = 5.0) -> dict[str
         }
     except httpx.HTTPError as exc:
         return {
-            "url": url,
+            "url": _safe_service_url(url),
             "host": parsed.hostname,
             "status": "offline",
             "http_status_code": None,
             "latency_ms": round((time.perf_counter() - started) * 1000, 2),
-            "error_message": (str(exc) or type(exc).__name__)[:200],
+            "error_message": f"HTTP request failed: {type(exc).__name__}",
             "probe_completed": True,
         }
 
