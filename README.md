@@ -22,6 +22,9 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 - **CSV export** for sharing or further analysis.
 - **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and configured HTTP(S) services.
 - **Continuous HTTP(S) service monitoring** with response times, HTTP status codes, persistent check history, confirmed service incidents, and Telegram outage/recovery alerts.
+- **Network quality sampling** using multiple ICMP packets per target to estimate packet loss, min/average/max latency, and jitter where supported by the system ping output.
+- **Sustained degradation detection** with consecutive-round thresholds and Telegram recovery notifications.
+- **Reliability reporting** combining time-based network availability with measurement coverage, service sample success rates, quality measurements, and incident durations.
 - **Optional Telegram alerts** on confirmed outage start and recovery transitions, with consecutive-check thresholds to reduce transient false alarms.
 - **JSON API** with an interactive API explorer at `/docs`.
 - **Lightweight local deployment** with Python and a local database.
@@ -158,16 +161,16 @@ For the summer-camp presentation:
 1. Start the app and show the dashboard updating from the local API.
 2. Point out reachable targets, average latency, recent checks, and outage information.
 3. Open `/docs` and run `/health`, `/api/status`, and `/api/statistics?hours=24`.
-4. Export the CSV and briefly show the measurements it contains.
-5. Click **Run diagnosis** and explain how local-gateway and external-target results guide troubleshooting without proving root cause.
-6. Explain the monitoring loop, SQLite history, and why gaps are not automatically counted as uptime.
+4. Show the continuously monitored HTTP service and its response code, response time, history, and confirmed incident section.
+5. Show packet loss, latency, and jitter samples, then explain that sustained quality degradation triggers an alert only after consecutive checks.
+6. Open the reliability summary and export the CSV to show measurements and incident history; point out that sample success rate is not the same as time-based uptime.
+7. Click **Run diagnosis** and explain how gateway, DNS, public-target, and HTTP results guide troubleshooting without claiming definitive root cause.
 
 A private speaking outline is maintained separately from this public repository.
 
 ## Known limitations and future work
 
-- ICMP ping can be blocked by a destination or network even when other services work; a failed ping alone is not proof that all internet access is unavailable.
-- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
+- ICMP ping can be blocked by a destination or network even when other services work; packet-loss warnings require context and are not proof that all internet access is unavailable. Compare them with HTTP checks where possible.\n- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
 - HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works. Configure safe GET-compatible health endpoints and avoid embedding credentials or secrets in URL query strings.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
 - Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
