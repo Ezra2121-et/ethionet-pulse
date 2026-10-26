@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#f5f7f5">
+  <meta name="theme-color" content="#0c1210">
   <meta name="description"
         content="Network connectivity and outage monitoring dashboard.">
   <title>{{ app_name }} — Network Overview</title>
@@ -38,6 +38,12 @@
         <a class="nav-link nav-api" href="/docs" target="_blank" rel="noreferrer">API explorer ↗</a>
       </nav>
 
+      <button class="theme-toggle" id="theme-toggle" type="button"
+              aria-label="Switch to light theme" aria-pressed="false"
+              title="Switch to light theme">
+        <span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">☀</span>
+        <span id="theme-toggle-label">Light mode</span>
+      </button>
       <div class="header-status">
         <span class="status-dot" aria-hidden="true"></span>
         <span>Monitor ready</span>
