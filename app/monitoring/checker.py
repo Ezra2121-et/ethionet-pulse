@@ -7,9 +7,14 @@ from datetime import datetime, timezone
 from app.config import settings
 from app.database import AsyncSessionLocal
 from app.models import ConnectivityCheck
+from app.monitoring.alerts import send_outage_alert
 from app.monitoring.outage import update_internet_outage
 
 logger = logging.getLogger(__name__)
+
+# Consecutive complete check rounds reduce one-off false alarms.
+_consecutive_failed_rounds = 0
+_consecutive_successful_rounds = 0
 
 
 async def _ping_target(
@@ -78,7 +83,9 @@ async def _ping_target(
 
 
 async def run_connectivity_checks() -> dict:
-    """Probe configured targets and persist the results."""
+    """Probe configured targets, record results, and alert on confirmed transitions."""
+    global _consecutive_failed_rounds, _consecutive_successful_rounds
+
     targets = settings.targets_list
 
     if not targets:
@@ -86,6 +93,7 @@ async def run_connectivity_checks() -> dict:
         return {
             "targets_checked": 0,
             "internet_online": None,
+            "outage_event": None,
         }
 
     results = await asyncio.gather(
@@ -100,11 +108,26 @@ async def run_connectivity_checks() -> dict:
         measured for _, _, _, measured in results
     )
 
+    failure_threshold = max(1, settings.OUTAGE_FAILURE_THRESHOLD)
+    recovery_threshold = max(1, settings.OUTAGE_RECOVERY_THRESHOLD)
+    outage_event = None
+
+    # Unknown probe results break a consecutive streak. We do not count
+    # local monitoring/tool errors as evidence that the internet is down.
+    if online_targets > 0:
+        _consecutive_failed_rounds = 0
+        _consecutive_successful_rounds += 1
+    elif all_probes_completed:
+        _consecutive_successful_rounds = 0
+        _consecutive_failed_rounds += 1
+    else:
+        _consecutive_failed_rounds = 0
+        _consecutive_successful_rounds = 0
+
     async with AsyncSessionLocal() as session:
         try:
             for target, result in zip(targets, results):
                 reachable, latency, error, _ = result
-
                 session.add(
                     ConnectivityCheck(
                         target=target,
@@ -114,12 +137,20 @@ async def run_connectivity_checks() -> dict:
                     )
                 )
 
-            # One responding target proves connectivity. To declare
-            # an outage, every configured probe must have completed.
-            if online_targets > 0 or all_probes_completed:
-                await update_internet_outage(
+            # Confirm an outage only after a run of complete failed rounds.
+            if (
+                _consecutive_failed_rounds >= failure_threshold
+                and all_probes_completed
+            ):
+                outage_event = await update_internet_outage(
                     session,
-                    is_online=online_targets > 0,
+                    is_online=False,
+                )
+            # Recover only after consecutive successful rounds.
+            elif _consecutive_successful_rounds >= recovery_threshold:
+                outage_event = await update_internet_outage(
+                    session,
+                    is_online=True,
                 )
 
             await session.commit()
@@ -128,6 +159,13 @@ async def run_connectivity_checks() -> dict:
             await session.rollback()
             logger.exception("Could not save connectivity results.")
             raise
+
+    if outage_event:
+        try:
+            await send_outage_alert(outage_event)
+        except Exception:
+            # Notification delivery must never break the monitor loop.
+            logger.exception("Outage alert handler failed; monitoring will continue.")
 
     internet_online = (
         True if online_targets > 0
@@ -141,9 +179,13 @@ async def run_connectivity_checks() -> dict:
         len(targets),
     )
 
+    if outage_event:
+        logger.info("Outage transition recorded: %s", outage_event["event"])
+
     return {
         "checked_at": datetime.now(timezone.utc).isoformat(),
         "targets_checked": len(targets),
         "online_targets": online_targets,
         "internet_online": internet_online,
+        "outage_event": outage_event,
     }
