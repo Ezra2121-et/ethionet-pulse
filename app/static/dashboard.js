@@ -2,6 +2,59 @@
 
 const $ = (id) => document.getElementById(id);
 
+const THEME_STORAGE_KEY = "ethionet-pulse-theme";
+let latestHistoryForChart = [];
+
+function applyTheme(theme) {
+  const selected = theme === "light" ? "light" : "dark";
+  document.documentElement.dataset.theme = selected;
+
+  const isDark = selected === "dark";
+  const button = $("theme-toggle");
+  const icon = $("theme-toggle-icon");
+  const label = $("theme-toggle-label");
+  const meta = document.querySelector('meta[name="theme-color"]');
+
+  if (button) {
+    const action = isDark ? "light" : "dark";
+    const actionLabel = isDark ? "Light mode" : "Dark mode";
+    button.setAttribute("aria-label", `Switch to ${action} theme`);
+    button.title = `Switch to ${action} theme`;
+    if (icon) icon.textContent = isDark ? "☀" : "☾";
+    if (label) label.textContent = actionLabel;
+  }
+  if (meta) meta.content = isDark ? "#0c1210" : "#f5f7f5";
+}
+
+function initializeThemeToggle() {
+  let savedTheme = "dark";
+  try {
+    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
+    if (stored === "light" || stored === "dark") savedTheme = stored;
+  } catch (_error) {
+    // The dashboard still works with dark mode when storage is unavailable.
+  }
+  applyTheme(savedTheme);
+
+  const button = $("theme-toggle");
+  if (!button) return;
+
+  button.addEventListener("click", () => {
+    const nextTheme = document.documentElement.dataset.theme === "dark"
+      ? "light"
+      : "dark";
+    applyTheme(nextTheme);
+    try {
+      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
+    } catch (_error) {
+      // Theme toggling still works for this page if persistence is blocked.
+    }
+    drawChart(latestHistoryForChart);
+  });
+}
+
+initializeThemeToggle();
+
 const targetNames = {
   "1.1.1.1": "Cloudflare DNS",
   "8.8.8.8": "Google Public DNS",
@@ -214,6 +267,7 @@ function renderTargets(targets) {
 
 function renderHistory(history) {
   const items = Array.isArray(history.items) ? history.items : [];
+  latestHistoryForChart = items;
   $("recent-checks").textContent = items.length;
   $("chart-range").textContent = `${items.length} recent samples`;
   renderActivity(items);
@@ -251,6 +305,7 @@ function renderActivity(items) {
 }
 
 function drawChart(items) {
+  const darkTheme = document.documentElement.dataset.theme !== "light";
   const canvas = $("latency-chart");
   const empty = $("chart-empty");
 
@@ -297,8 +352,8 @@ function drawChart(items) {
 
   context.font = "10px system-ui, sans-serif";
   context.lineWidth = 1;
-  context.strokeStyle = "#e4ebe7";
-  context.fillStyle = "#6b7b72";
+  context.strokeStyle = darkTheme ? "#2b3b32" : "#e4ebe7";
+  context.fillStyle = darkTheme ? "#9aaba0" : "#6b7b72";
 
   for (let i = 0; i <= 3; i++) {
     const y = top + (plotHeight / 3) * i;
@@ -320,8 +375,8 @@ function drawChart(items) {
 
   if (coords.length > 1) {
     const gradient = context.createLinearGradient(0, top, 0, bottom);
-    gradient.addColorStop(0, "rgba(33, 133, 109, 0.18)");
-    gradient.addColorStop(1, "rgba(33, 133, 109, 0.00)");
+    gradient.addColorStop(0, darkTheme ? "rgba(104, 201, 158, 0.20)" : "rgba(33, 133, 109, 0.18)");
+    gradient.addColorStop(1, darkTheme ? "rgba(104, 201, 158, 0.00)" : "rgba(33, 133, 109, 0.00)");
 
     context.beginPath();
     context.moveTo(coords[0].x, bottom);
@@ -337,7 +392,7 @@ function drawChart(items) {
     if (index === 0) context.moveTo(point.x, point.y);
     else context.lineTo(point.x, point.y);
   });
-  context.strokeStyle = "#21856d";
+  context.strokeStyle = darkTheme ? "#68c99e" : "#21856d";
   context.lineWidth = 2;
   context.lineJoin = "round";
   context.lineCap = "round";
@@ -346,7 +401,7 @@ function drawChart(items) {
   if (coords.length === 1) {
     context.beginPath();
     context.arc(coords[0].x, coords[0].y, 3, 0, Math.PI * 2);
-    context.fillStyle = "#21856d";
+    context.fillStyle = darkTheme ? "#68c99e" : "#21856d";
     context.fill();
   }
 
