@@ -357,7 +357,7 @@ function drawChart(items) {
     context.fill();
   }
 
-  context.fillStyle = "#6b7b72";
+  context.fillStyle = darkTheme ? "#9aaba0" : "#6b7b72";
   context.font = "10px system-ui, sans-serif";
   context.textAlign = "left";
   context.fillText(formatClock(points[0].timestamp), left, height - 7);
@@ -887,7 +887,7 @@ function renderQualityHistory(payload) {
   for (const item of rows) {
     const row = element("tr");
     const state = element("td");
-    state.append(makeChip(item.probe_completed ? (item.is_degraded ? "degraded" : "healthy") : "error"));
+    state.append(makeChip(item.status || (item.probe_completed ? "healthy" : "error")));
     row.append(
       element("td", "", item.target || "—"),
       state,
