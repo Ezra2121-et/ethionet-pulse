@@ -76,6 +76,7 @@ function statusLabel(status) {
     error: "Probe error",
     not_checked: "Not checked",
     unavailable: "Unavailable",
+    pending: "Awaiting first check",
     resolved: "DNS resolved",
     failed: "DNS lookup failed",
     unhealthy: "HTTP unhealthy",
@@ -91,6 +92,7 @@ function chipClass(status) {
     unhealthy: "chip-warning",
     error: "chip-warning",
     not_checked: "chip-muted",
+    pending: "chip-muted",
     unavailable: "chip-muted",
   }[status] || "chip-muted";
 }
@@ -396,6 +398,98 @@ function renderOutages(payload) {
 }
 
 
+function renderServices(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const root = $("service-list");
+  root.replaceChildren();
+
+  $("service-count").textContent =
+    `${items.length} service${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    root.append(element(
+      "div",
+      "service-empty",
+      "No HTTP services are configured. Add SERVICE_URLS to your local .env and restart the monitor."
+    ));
+    return;
+  }
+
+  for (const service of items) {
+    const card = element("article", "service-card");
+    const top = element("div", "service-card-top");
+    const url = element("strong", "service-url", service.service_url);
+    top.append(url, makeChip(service.status || "pending"));
+
+    const metrics = element("div", "service-metrics");
+    const statusDetail = service.http_status_code
+      ? `HTTP ${service.http_status_code}`
+      : service.status === "online"
+        ? "Successful response"
+        : service.status === "pending"
+          ? "Waiting for scheduled check"
+          : "No HTTP response";
+    metrics.append(element("span", "", statusDetail));
+    if (service.response_time_ms !== null && service.response_time_ms !== undefined) {
+      metrics.append(element("span", "", `${formatLatency(service.response_time_ms)} response time`));
+    }
+
+    const metaText = service.timestamp
+      ? `Last checked ${formatDateTime(service.timestamp)}`
+      : "No check has been recorded yet";
+    card.append(top, metrics, element("small", "service-meta", metaText));
+
+    if (service.error_message) {
+      card.append(element("small", "service-error", service.error_message));
+    }
+
+    root.append(card);
+  }
+}
+
+function renderServiceOutages(payload) {
+  const items = Array.isArray(payload.items) ? payload.items : [];
+  const root = $("service-outage-list");
+  root.replaceChildren();
+  $("service-incident-count").textContent =
+    `${items.length} incident${items.length === 1 ? "" : "s"}`;
+
+  if (!items.length) {
+    root.append(element("div", "loading-row", "No confirmed service incidents recorded."));
+    return;
+  }
+
+  for (const incident of items.slice(0, 5)) {
+    const row = element("div", "service-incident");
+    const marker = element(
+      "span",
+      `outage-marker${incident.is_resolved ? " resolved" : ""}`,
+      incident.is_resolved ? "✓" : "!"
+    );
+    const copy = element("div", "service-incident-copy");
+    copy.append(
+      element("strong", "service-incident-url", incident.service_url),
+      element(
+        "small",
+        "service-meta",
+        `${formatDateTime(incident.start_time)}${incident.end_time ? ` · Recovered ${formatClock(incident.end_time)}` : " · Still unresolved"}`
+      )
+    );
+    const side = element("div", "service-incident-side");
+    side.append(
+      element("strong", "outage-duration", formatDuration(incident.duration_seconds)),
+      element(
+        "span",
+        `status-chip ${incident.is_resolved ? "chip-success" : "chip-warning"}`,
+        incident.is_resolved ? "Recovered" : "Active"
+      )
+    );
+    row.append(marker, copy, side);
+    root.append(row);
+  }
+}
+
+
 function renderStatistics(payload) {
   const hours = Number(payload.window_hours) || 24;
   const uptime = payload.uptime_percentage;
@@ -513,17 +607,21 @@ async function refreshDashboard() {
   icon.classList.add("spinning");
 
   try {
-    const [status, history, outages, statistics] = await Promise.all([
+    const [status, history, outages, statistics, services, serviceOutages] = await Promise.all([
       getJson("/api/status"),
       getJson("/api/history?limit=90"),
       getJson("/api/outages?limit=10"),
       getJson("/api/statistics?hours=24"),
+      getJson("/api/services"),
+      getJson("/api/service-outages?limit=10"),
     ]);
 
     renderStatus(status);
     renderHistory(history);
     renderOutages(outages);
     renderStatistics(statistics);
+    renderServices(services);
+    renderServiceOutages(serviceOutages);
     $("last-updated").textContent =
       `Updated ${new Date().toLocaleTimeString([], {
         hour: "2-digit", minute: "2-digit", second: "2-digit"
