@@ -1,6 +1,8 @@
 import unittest
 
-from app.web import hash_password, verify_password
+from starlette.requests import Request
+
+from app.web import _csrf_ok, _csrf_token, hash_password, verify_password
 
 
 class PasswordHashTests(unittest.TestCase):
@@ -20,6 +22,30 @@ class PasswordHashTests(unittest.TestCase):
         self.assertFalse(verify_password("wrong-password", stored))
         self.assertFalse(verify_password("any-password", None))
         self.assertFalse(verify_password("any-password", "not-a-valid-hash"))
+
+
+    def test_csrf_token_is_required_and_session_bound(self):
+        scope = {
+            "type": "http",
+            "asgi": {"version": "3.0"},
+            "http_version": "1.1",
+            "method": "GET",
+            "scheme": "http",
+            "path": "/",
+            "raw_path": b"/",
+            "query_string": b"",
+            "headers": [],
+            "client": ("test-client", 1234),
+            "server": ("test-server", 80),
+            "session": {},
+        }
+        request = Request(scope)
+        token = _csrf_token(request)
+
+        self.assertTrue(token)
+        self.assertTrue(_csrf_ok(request, token))
+        self.assertFalse(_csrf_ok(request, "wrong-token"))
+        self.assertFalse(_csrf_ok(request, ""))
 
 
 if __name__ == "__main__":
