@@ -60,7 +60,7 @@ def hash_password(password: str) -> str:
 
 
 def verify_password(password: str, stored_hash: str | None) -> bool:
-    if not stored_hash:
+    if len(password) > 1024 or not stored_hash:
         return False
     try:
         algorithm, n, r, p, salt_text, digest_text = stored_hash.split("$", 5)
@@ -346,8 +346,8 @@ async def google_callback(
             raise ValueError("Google email is not verified.")
 
         subject = claims.get("sub", "")
-        email = claims.get("email", "").strip().lower()
-        display_name = (claims.get("name") or email.split("@")[0]).strip()[:120]
+        email = str(claims.get("email") or "").strip().lower()
+        display_name = str(claims.get("name") or email.split("@")[0]).strip()[:120]
         if not subject or not EMAIL_PATTERN.fullmatch(email):
             raise ValueError("Google did not return a valid account identity.")
 
@@ -381,7 +381,7 @@ async def google_callback(
         _csrf_token(request)
         return RedirectResponse("/dashboard", status_code=303)
 
-    except (httpx.HTTPError, GoogleAuthError, ValueError, TypeError, KeyError, OSError):
+    except (httpx.HTTPError, GoogleAuthError, ValueError, TypeError, KeyError, AttributeError, OSError):
         return _flash_redirect(
             request,
             "Google sign-in could not be verified. Check the OAuth configuration and try again.",
