@@ -2,6 +2,7 @@ import asyncio
 import re
 import tempfile
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 from fastapi import FastAPI
@@ -93,7 +94,11 @@ class WebPageFlowTests(unittest.TestCase):
         self.assertIn('href="/auth/google"', response.text)
         self.assertIn('href="/register"', response.text)
         self.assertIn("auth-footer", response.text)
-        self.assertIn("Contact on GitHub", response.text)
+        self.assertIn('class="auth-contact"', response.text)
+        self.assertIn("Need help?", response.text)
+        self.assertTrue(
+            "Contact on GitHub" in response.text or 'href="mailto:' in response.text
+        )
         self.assertNotIn("Testimonials", response.text)
         self.assertNotIn("Customer reviews", response.text)
 
@@ -135,6 +140,47 @@ class WebPageFlowTests(unittest.TestCase):
                 self.assertEqual(response.status_code, 200)
                 self.assertIn(f'data-page="{page_key}"', response.text)
                 self.assertIn(expected_text, response.text)
+
+    def test_manual_login_works_after_registration_and_logout(self):
+        response = self.register_account()
+        self.assertEqual(response.status_code, 303)
+
+        settings_page = self.client.get("/dashboard/settings")
+        self.assertEqual(settings_page.status_code, 200)
+        logout_token = self.csrf_token(settings_page.text)
+        logout_response = self.client.post(
+            "/auth/logout",
+            data={"csrf_token": logout_token},
+        )
+        self.assertEqual(logout_response.status_code, 303)
+        self.assertEqual(logout_response.headers["location"], "/login")
+
+        login_page = self.client.get("/login")
+        login_token = self.csrf_token(login_page.text)
+        login_response = self.client.post(
+            "/auth/login",
+            data={
+                "csrf_token": login_token,
+                "email": "test.user@example.test",
+                "password": "a-long-test-password",
+            },
+        )
+        self.assertEqual(login_response.status_code, 303)
+        self.assertEqual(login_response.headers["location"], "/dashboard")
+        self.assertEqual(self.client.get("/dashboard").status_code, 200)
+
+    def test_google_signin_explains_when_oauth_is_not_configured(self):
+        from app.config import settings
+
+        with (
+            patch.object(settings, "GOOGLE_CLIENT_ID", ""),
+            patch.object(settings, "GOOGLE_CLIENT_SECRET", ""),
+        ):
+            response = self.client.get("/auth/google")
+        self.assertEqual(response.status_code, 303)
+        self.assertEqual(response.headers["location"], "/login")
+        page = self.client.get("/login")
+        self.assertIn("Google sign-in is not configured yet", page.text)
 
     def test_registration_rejects_missing_csrf_token(self):
         response = self.client.post(
