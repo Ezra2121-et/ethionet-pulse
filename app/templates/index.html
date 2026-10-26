@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="theme-color" content="#0b1220">
+  <meta name="theme-color" content="#f4f7f5">
   <meta name="description"
         content="Network connectivity and outage monitoring dashboard.">
   <title>{{ app_name }} — Network Overview</title>
@@ -26,13 +26,16 @@
       <span class="brand-name">EthioNet<span>Pulse</span></span>
     </a>
 
-    <p class="nav-label">WORKSPACE</p>
+    <p class="nav-label">Monitor</p>
     <nav class="nav-links" aria-label="Main navigation">
       <a class="nav-link active" href="#overview">
         <span class="nav-symbol">◫</span> Overview
       </a>
       <a class="nav-link" href="#targets">
         <span class="nav-symbol">⌁</span> Connectivity
+      </a>
+      <a class="nav-link" href="#diagnosis">
+        <span class="nav-symbol">⌕</span> Diagnosis
       </a>
       <a class="nav-link" href="#services">
         <span class="nav-symbol">◎</span> Service monitoring
@@ -60,14 +63,14 @@
           <span>Local instance</span>
         </div>
       </div>
-      <p class="sidebar-caption">ETHIONET PULSE · EARLY ACCESS</p>
+      <p class="sidebar-caption">Local monitoring workspace</p>
     </div>
   </aside>
 
   <main class="main-content" id="overview">
     <header class="topbar">
       <div>
-        <p class="eyebrow">NETWORK OPERATIONS / OVERVIEW</p>
+        <p class="eyebrow">Live network monitoring</p>
         <h1>Network overview<span class="heading-period">.</span></h1>
         <p class="page-subtitle">
           Your connectivity, measured and recorded.
@@ -92,7 +95,7 @@
              aria-live="polite">
       <div class="status-emblem" id="status-icon">…</div>
       <div class="status-copy">
-        <p class="eyebrow" id="status-kicker">CONNECTIVITY STATUS</p>
+        <p class="eyebrow" id="status-kicker">Connection status</p>
         <h2 id="overall-title">Checking connection</h2>
         <p id="overall-message">
           Waiting for the first status response from your local monitor.
@@ -105,25 +108,13 @@
     </section>
 
 
-    <section class="panel diagnosis-panel" aria-labelledby="diagnosis-heading">
-      <div class="panel-heading">
-        <div>
-          <p class="eyebrow">TROUBLESHOOTING</p>
-          <h2 id="diagnosis-heading">Connectivity diagnosis</h2>
-          <p class="panel-subtitle">Compare your local gateway with public targets to help narrow down where a problem may be.</p>
-        </div>
-        <button class="refresh-button" id="diagnose-button" type="button">Run diagnosis</button>
-      </div>
-      <div class="diagnosis-body" id="diagnosis-result" aria-live="polite">
-        <p class="diagnosis-placeholder">Run a check to compare the local gateway with public destinations. This is a clue, not proof of the root cause.</p>
-      </div>
-    </section>
+
 
     <section class="metrics-grid" aria-label="Network summary">
       <article class="metric-card">
         <div class="metric-heading">
           <span class="metric-icon icon-teal">↗</span>
-          <span>AVERAGE LATENCY</span>
+          <span>Average latency</span>
         </div>
         <div class="metric-value" id="avg-latency">—</div>
         <p class="metric-foot" id="latency-detail">
@@ -134,7 +125,7 @@
       <article class="metric-card">
         <div class="metric-heading">
           <span class="metric-icon icon-blue">⌁</span>
-          <span>REACHABLE TARGETS</span>
+          <span>Reachable targets</span>
         </div>
         <div class="metric-value" id="reachable-count">—</div>
         <p class="metric-foot" id="reachable-detail">
@@ -145,7 +136,7 @@
       <article class="metric-card">
         <div class="metric-heading">
           <span class="metric-icon icon-purple">◷</span>
-          <span>ACTIVE INCIDENTS</span>
+          <span>Active incidents</span>
         </div>
         <div class="metric-value" id="active-incidents">—</div>
         <p class="metric-foot" id="incident-detail">
@@ -156,7 +147,7 @@
       <article class="metric-card">
         <div class="metric-heading">
           <span class="metric-icon icon-amber">▤</span>
-          <span>RECENT CHECKS</span>
+          <span>Recent checks</span>
         </div>
         <div class="metric-value" id="recent-checks">—</div>
         <p class="metric-foot">Measurements loaded from history</p>
@@ -267,6 +258,20 @@
       <p class="panel-footnote">
         Quality checks use multiple ICMP pings. Routers or destinations may filter ICMP, so packet loss is a signal to investigate, not proof that every application is failing.
       </p>
+    </section>
+
+    <section class="panel diagnosis-panel" aria-labelledby="diagnosis-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">TROUBLESHOOTING</p>
+          <h2 id="diagnosis-heading">Connectivity diagnosis</h2>
+          <p class="panel-subtitle">Compare your local gateway with public targets to help narrow down where a problem may be.</p>
+        </div>
+        <button class="refresh-button" id="diagnose-button" type="button">Run diagnosis</button>
+      </div>
+      <div class="diagnosis-body" id="diagnosis-result" aria-live="polite">
+        <p class="diagnosis-placeholder">Run a check to compare the local gateway with public destinations. This is a clue, not proof of the root cause.</p>
+      </div>
     </section>
 
     <section class="bottom-grid">
