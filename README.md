@@ -79,6 +79,16 @@ Then open:
 
 Stop the server with `Ctrl+C`.
 
+## Run the tests
+
+With the virtual environment activated and dependencies installed, run the standard-library unit tests:
+
+```bash
+python -m unittest discover -s tests -v
+```
+
+The tests cover connectivity-round classification and verify that long gaps between measurements are left unmonitored rather than counted as uptime.
+
 ## Configuration
 
 Edit the local `.env` file before launching the application:
