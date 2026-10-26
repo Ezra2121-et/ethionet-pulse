@@ -205,7 +205,7 @@ async def export_csv(
             safe_text(incident.notes), "", "", 
             incident.peak_packet_loss_percent if incident.peak_packet_loss_percent is not None else "",
             "", incident.peak_latency_ms if incident.peak_latency_ms is not None else "",
-            "", "", "",
+            "", "", "", "",
         ])
 
     filename = f"ethionet-pulse-report-{hours}h.csv"
