@@ -37,6 +37,9 @@
       <a class="nav-link" href="#services">
         <span class="nav-symbol">◎</span> Service monitoring
       </a>
+      <a class="nav-link" href="#network-quality">
+        <span class="nav-symbol">⌁</span> Network quality
+      </a>
       <a class="nav-link" href="#outages">
         <span class="nav-symbol">◷</span> Outage history
       </a>
@@ -231,6 +234,35 @@
       </div>
       <p class="panel-footnote">
         HTTP 2xx–3xx responses count as healthy. This checks endpoint availability, not every function inside an application.
+      </p>
+    </section>
+
+    <section class="panel quality-panel" id="network-quality">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">CONNECTION QUALITY</p>
+          <h2>Packet loss and latency</h2>
+          <p class="panel-subtitle">
+            Multi-packet ICMP samples help distinguish reachable-but-degraded links from healthy responses.
+          </p>
+        </div>
+        <span class="count-label" id="quality-target-count">0 targets</span>
+      </div>
+      <div class="quality-list" id="quality-list" aria-live="polite">
+        <div class="loading-row">Loading network quality measurements…</div>
+      </div>
+      <div class="service-incidents-heading">
+        <div>
+          <h3>Recent quality incidents</h3>
+          <p class="panel-subtitle">Sustained degradation and recovery history.</p>
+        </div>
+        <span class="count-label" id="quality-incident-count">0 incidents</span>
+      </div>
+      <div class="service-outage-list" id="quality-incident-list">
+        <div class="loading-row">Loading quality incidents…</div>
+      </div>
+      <p class="panel-footnote">
+        Quality checks use multiple ICMP pings. Routers or destinations may filter ICMP, so packet loss is a signal to investigate, not proof that every application is failing.
       </p>
     </section>
 
