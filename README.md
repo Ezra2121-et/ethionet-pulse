@@ -106,6 +106,8 @@ The landing page is intentionally limited to sign-in, account creation, and cont
 
 The app uses a signed session cookie. Keep `SESSION_SECRET_KEY` private and set `SESSION_COOKIE_SECURE=true` only when the app is served over HTTPS. The default `false` is intended for local HTTP development.
 
+> **Account scope:** this prototype authenticates access to one self-hosted monitoring workspace. Monitoring targets, service URLs, history, incidents, and Telegram configuration are currently instance-wide and shared by signed-in accounts; they are not private per-user workspaces. Do not expose this as a public multi-tenant service until per-user monitoring configuration and record ownership are implemented.
+
 Stop the server with `Ctrl+C`.
 
 ## Run the tests
