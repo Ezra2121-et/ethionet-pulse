@@ -592,6 +592,73 @@ function renderQualityIncidents(payload) {
 }
 
 
+function renderReliabilityReport(payload) {
+  const root = $("reliability-summary");
+  root.replaceChildren();
+
+  const network = payload.network || {};
+  const services = payload.services || {};
+  const quality = payload.network_quality || {};
+  const serviceItems = Array.isArray(services.items) ? services.items : [];
+  const successes = serviceItems.reduce(
+    (sum, item) => sum + Number(item.successful_checks || 0), 0
+  );
+  const failures = serviceItems.reduce(
+    (sum, item) => sum + Number(item.failed_checks || 0), 0
+  );
+  const attempts = successes + failures;
+  const serviceSuccessRate = attempts
+    ? `${(100 * successes / attempts).toFixed(1)}%`
+    : "No samples";
+  const qualityItems = Array.isArray(quality.items) ? quality.items : [];
+  const degradedSamples = qualityItems.reduce(
+    (sum, item) => sum + Number(item.degraded_samples || 0), 0
+  );
+  const serviceIncidents = services.incidents || {};
+  const qualityIncidents = quality.incidents || {};
+  const networkIncidents = network.outages || {};
+  const totalIncidents =
+    Number(networkIncidents.count || 0) +
+    Number(serviceIncidents.count || 0) +
+    Number(qualityIncidents.count || 0);
+
+  const cards = [
+    {
+      label: "OBSERVED NETWORK UPTIME",
+      value: network.uptime_percentage === null || network.uptime_percentage === undefined
+        ? "No data"
+        : `${Number(network.uptime_percentage).toFixed(2)}%`,
+      note: `Measured coverage ${Number(network.measurement_coverage_percentage || 0).toFixed(1)}% · unmonitored gaps excluded`,
+    },
+    {
+      label: "SERVICE CHECK SUCCESS RATE",
+      value: serviceSuccessRate,
+      note: `${successes} successful / ${attempts} completed checks · sample-based, not time-based uptime`,
+    },
+    {
+      label: "DEGRADED QUALITY SAMPLES",
+      value: `${degradedSamples} / ${Number(quality.sample_count || 0)}`,
+      note: `${Number(qualityIncidents.count || 0)} sustained quality incident(s) in the window`,
+    },
+    {
+      label: "CONFIRMED INCIDENTS",
+      value: String(totalIncidents),
+      note: `${Number(networkIncidents.count || 0)} internet · ${Number(serviceIncidents.count || 0)} service · ${Number(qualityIncidents.count || 0)} quality`,
+    },
+  ];
+
+  for (const item of cards) {
+    const card = element("article", "reliability-card");
+    card.append(
+      element("span", "reliability-label", item.label),
+      element("strong", "reliability-value", item.value),
+      element("small", "reliability-note", item.note)
+    );
+    root.append(card);
+  }
+}
+
+
 function renderStatistics(payload) {
   const hours = Number(payload.window_hours) || 24;
   const uptime = payload.uptime_percentage;
@@ -711,7 +778,7 @@ async function refreshDashboard() {
   try {
     const [
       status, history, outages, statistics, services, serviceOutages,
-      quality, qualityIncidents,
+      quality, qualityIncidents, reliability,
     ] = await Promise.all([
       getJson("/api/status"),
       getJson("/api/history?limit=90"),
@@ -721,6 +788,7 @@ async function refreshDashboard() {
       getJson("/api/service-outages?limit=10"),
       getJson("/api/quality"),
       getJson("/api/quality-incidents?limit=10"),
+      getJson("/api/reports/reliability?hours=24"),
     ]);
 
     renderStatus(status);
@@ -731,6 +799,7 @@ async function refreshDashboard() {
     renderServiceOutages(serviceOutages);
     renderNetworkQuality(quality);
     renderQualityIncidents(qualityIncidents);
+    renderReliabilityReport(reliability);
     $("last-updated").textContent =
       `Updated ${new Date().toLocaleTimeString([], {
         hour: "2-digit", minute: "2-digit", second: "2-digit"
