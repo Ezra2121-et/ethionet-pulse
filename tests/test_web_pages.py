@@ -141,6 +141,30 @@ class WebPageFlowTests(unittest.TestCase):
                 self.assertIn(f'data-page="{page_key}"', response.text)
                 self.assertIn(expected_text, response.text)
 
+    def test_dashboard_uses_sidebar_navigation_and_mobile_menu(self):
+        registration = self.register_account()
+        self.assertEqual(registration.status_code, 303)
+
+        response = self.client.get("/dashboard")
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('class="app-sidebar" id="app-sidebar"', response.text)
+        self.assertIn('id="sidebar-toggle"', response.text)
+        self.assertIn('id="sidebar-backdrop"', response.text)
+        self.assertIn('src="/static/sidebar.js"', response.text)
+
+        for path in (
+            "/dashboard",
+            "/dashboard/connectivity",
+            "/dashboard/services",
+            "/dashboard/quality",
+            "/dashboard/diagnosis",
+            "/dashboard/incidents",
+            "/dashboard/reports",
+            "/dashboard/settings",
+        ):
+            with self.subTest(path=path):
+                self.assertIn(f'href="{path}"', response.text)
+
     def test_manual_login_works_after_registration_and_logout(self):
         response = self.register_account()
         self.assertEqual(response.status_code, 303)
