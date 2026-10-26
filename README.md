@@ -89,6 +89,14 @@ python -m unittest discover -s tests -v
 
 The tests cover connectivity-round classification and verify that long gaps between measurements are left unmonitored rather than counted as uptime.
 
+## Connectivity diagnosis
+
+The dashboard includes an on-demand **Run diagnosis** action. It compares a ping to the Linux default gateway with pings to configured public targets, then suggests what to investigate based on the results.
+
+This is a troubleshooting aid, not definitive root-cause analysis. Routers, firewalls, or providers may block ICMP ping even when other traffic works. The diagnosis does not change stored monitoring history.
+
+API endpoint: `GET /api/diagnose`.
+
 ## Configuration
 
 Edit the local `.env` file before launching the application:
