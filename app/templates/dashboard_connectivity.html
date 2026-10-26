@@ -1,0 +1,36 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="content-grid">
+  <article class="panel chart-panel">
+    <div class="panel-heading">
+      <div><h2>Latency trend</h2><p class="panel-subtitle">Recorded round-trip times from successful checks.</p></div>
+      <span class="range-label" id="chart-range">Recent samples</span>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="latency-chart" aria-label="Chart of network latency in milliseconds" role="img"></canvas>
+      <div class="chart-empty" id="chart-empty"><span class="empty-icon">⌁</span><strong>No latency data yet</strong><span>Measurements appear after a successful check.</span></div>
+    </div>
+    <div class="chart-footer"><span><span class="legend-dot"></span> Round-trip latency</span><span id="stats-coverage">Measured coverage — · known state —</span></div>
+  </article>
+  <article class="panel targets-panel">
+    <div class="panel-heading">
+      <div><h2>Monitored targets</h2><p class="panel-subtitle">Latest result for each destination.</p></div>
+      <span class="count-label" id="target-count">0 targets</span>
+    </div>
+    <div class="target-list" id="target-list"><div class="loading-row">Loading destinations…</div></div>
+    <p class="panel-footnote">Reachability is tested using ICMP ping.</p>
+  </article>
+</section>
+
+<section class="panel activity-panel section-gap">
+  <div class="panel-heading">
+    <div><h2>Recent checks</h2><p class="panel-subtitle">Latest stored connectivity measurements.</p></div>
+    <span class="count-label" id="recent-check-count">Loading…</span>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>DESTINATION</th><th>RESULT</th><th>LATENCY</th></tr></thead>
+    <tbody id="activity-list"><tr><td colspan="3" class="loading-row">Loading checks…</td></tr></tbody>
+  </table></div>
+  <div class="panel-footnote">Latency statistics exclude unsuccessful probes. Observed uptime should be read alongside measurement coverage.</div>
+</section>
+{% endblock %}

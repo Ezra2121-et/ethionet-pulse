@@ -26,6 +26,48 @@ class AlertMessageTests(unittest.TestCase):
         self.assertIn("connectivity recovered", message)
         self.assertIn("2m 5s", message)
 
+    def test_service_outage_message_names_the_service(self):
+        message = format_outage_message({
+            "event": "service_outage_started",
+            "service_url": "https://example.test/health",
+            "start_time": "2026-10-26T10:00:00+00:00",
+        })
+        self.assertIn("monitored service is down", message)
+        self.assertIn("https://example.test/health", message)
+
+    def test_service_recovery_message_includes_duration(self):
+        message = format_outage_message({
+            "event": "service_outage_recovered",
+            "service_url": "https://example.test/health",
+            "end_time": "2026-10-26T10:20:00+00:00",
+            "duration_seconds": 125,
+        })
+        self.assertIn("monitored service recovered", message)
+        self.assertIn("2m 5s", message)
+
+    def test_quality_degradation_message_includes_measurements(self):
+        message = format_outage_message({
+            "event": "network_quality_degraded",
+            "target": "1.1.1.1",
+            "packet_loss_percent": 40.0,
+            "latency_avg_ms": 450.0,
+        })
+        self.assertIn("network quality degraded", message)
+        self.assertIn("40.0%", message)
+        self.assertIn("450.0 ms", message)
+
+    def test_quality_recovery_message_includes_duration(self):
+        message = format_outage_message({
+            "event": "network_quality_recovered",
+            "target": "1.1.1.1",
+            "end_time": "2026-10-26T10:20:00+00:00",
+            "duration_seconds": 125,
+            "peak_packet_loss_percent": 40.0,
+            "peak_latency_ms": 450.0,
+        })
+        self.assertIn("network quality recovered", message)
+        self.assertIn("2m 5s", message)
+
 
 class AlertDispatchTests(unittest.IsolatedAsyncioTestCase):
     async def test_disabled_alerts_do_not_contact_telegram(self):

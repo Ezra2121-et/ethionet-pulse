@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c1210">
+  <meta name="description" content="Create an EthioNet Pulse account.">
+  <title>Create account · {{ app_name }}</title>
+  <link rel="stylesheet" href="/static/auth.css">
+  <script src="/static/theme.js" defer></script>
+</head>
+<body class="auth-page">
+  <main class="auth-shell">
+    <header class="auth-topbar">
+      <a href="/" class="auth-brand" aria-label="EthioNet Pulse">
+        <span class="auth-brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 40 40" fill="none">
+            <path d="M6 22h7l4-10 7 17 4-9h6" stroke="currentColor" stroke-width="2.7" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="20" cy="20" r="17" stroke="currentColor" stroke-opacity=".32"/>
+          </svg>
+        </span>
+        <span>EthioNet<span>Pulse</span></span>
+      </a>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="Switch to light theme" title="Switch to light theme">
+        <span class="theme-toggle-icon" id="theme-toggle-icon" aria-hidden="true">☀</span>
+        <span id="theme-toggle-label">Light mode</span>
+      </button>
+    </header>
+
+    <section class="auth-card register-card" aria-labelledby="auth-title">
+      <div class="auth-heading">
+        <p class="auth-eyebrow">GET STARTED</p>
+        <h1 id="auth-title">Create your account</h1>
+        <p>Use your Google account or register with email.</p>
+      </div>
+
+      {% if message %}
+      <div class="auth-message" role="alert">{{ message }}</div>
+      {% endif %}
+
+      <a class="google-button" href="/auth/google?from=register">
+        <span class="google-g" aria-hidden="true">G</span>
+        <span>Continue with Google</span>
+      </a>
+
+      <div class="auth-divider"><span>or register with email</span></div>
+
+      <form class="auth-form" action="/auth/register" method="post">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+        <label for="name">Full name</label>
+        <input id="name" name="name" type="text" autocomplete="name" maxlength="120" placeholder="Your name" required>
+        <label for="email">Email address</label>
+        <input id="email" name="email" type="email" autocomplete="email" maxlength="255" placeholder="you@example.com" required>
+        <label for="password">Password</label>
+        <input id="password" name="password" type="password" autocomplete="new-password" minlength="10" required>
+        <p class="input-hint">Use at least 10 characters.</p>
+        <label for="confirm_password">Confirm password</label>
+        <input id="confirm_password" name="confirm_password" type="password" autocomplete="new-password" minlength="10" required>
+        <button class="auth-submit" type="submit">Create account</button>
+      </form>
+
+      <p class="auth-switch">Already have an account? <a href="/login">Sign in</a></p>
+    </section>
+
+    <footer class="auth-footer">
+      <span>© {{ app_name }}</span>
+      <span class="auth-contact">
+        <span>Need help?</span>
+        {% if contact_email %}
+        <a href="mailto:{{ contact_email }}">{{ contact_email }}</a>
+        {% else %}
+        <a href="https://github.com/Ezra2121-et/ethionet-pulse" target="_blank" rel="noreferrer">Contact on GitHub</a>
+        {% endif %}
+      </span>
+    </footer>
+  </main>
+</body>
+</html>

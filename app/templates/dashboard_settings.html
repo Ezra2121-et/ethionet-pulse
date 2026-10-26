@@ -1,0 +1,28 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="panel settings-section">
+  <div class="panel-heading"><div><h2>Appearance</h2><p class="panel-subtitle">Choose the theme that is easiest on your eyes.</p></div></div>
+  <div class="settings-row">
+    <div><strong>Dark or light mode</strong><p>Your choice is saved in this browser and used on the sign-in page too.</p></div>
+    <button class="theme-toggle settings-theme-toggle" type="button" id="theme-toggle-settings" aria-label="Switch theme">
+      <span class="theme-toggle-icon" aria-hidden="true">☀</span><span id="theme-toggle-settings-label">Light mode</span>
+    </button>
+  </div>
+</section>
+<section class="panel settings-section">
+  <div class="panel-heading"><div><h2>Monitoring configuration</h2><p class="panel-subtitle">This self-hosted instance reads its monitoring settings from your local environment file.</p></div></div>
+  <div class="settings-prose">
+    <p>To change network targets or the check interval, edit <code>.env</code> in your project directory and restart EthioNet Pulse.</p>
+    <p>HTTP services are configured with <code>SERVICE_URLS</code>. Separate multiple HTTP(S) endpoints with commas.</p>
+    <p>Telegram notifications use <code>ENABLE_TELEGRAM_ALERTS</code>, <code>TELEGRAM_BOT_TOKEN</code>, and <code>TELEGRAM_CHAT_ID</code>. Keep the token private and never commit <code>.env</code>.</p>
+    <p>Google sign-in is configured with <code>GOOGLE_CLIENT_ID</code> and <code>GOOGLE_CLIENT_SECRET</code>. The callback URL must match the URI configured in Google Cloud Console.</p>
+  </div>
+</section>
+<section class="panel settings-section">
+  <div class="panel-heading"><div><h2>Account</h2><p class="panel-subtitle">Signed-in identity for this monitoring workspace.</p></div></div>
+  <div class="settings-row">
+    <div><strong>{{ current_user.display_name or current_user.email }}</strong><p>{{ current_user.email }}</p></div>
+    <form action="/auth/logout" method="post"><input type="hidden" name="csrf_token" value="{{ csrf_token }}"><button class="logout-button settings-logout" type="submit">Sign out</button></form>
+  </div>
+</section>
+{% endblock %}

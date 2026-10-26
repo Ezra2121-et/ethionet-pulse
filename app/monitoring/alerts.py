@@ -41,6 +41,71 @@ def format_outage_message(event: dict[str, Any]) -> str:
             f"Recorded outage duration: {duration_label}"
         )
 
+    if kind == "service_outage_started":
+        timestamp = event.get("start_time") or "time unavailable"
+        service_url = event.get("service_url") or "configured HTTP service"
+        return (
+            f"🚨 {name}: monitored service is down\n"
+            f"Service: {service_url}\n"
+            f"Confirmed: {timestamp}\n"
+            "The endpoint failed the required consecutive checks. "
+            "Verify the service and network before concluding the cause."
+        )
+
+    if kind == "service_outage_recovered":
+        timestamp = event.get("end_time") or "time unavailable"
+        service_url = event.get("service_url") or "configured HTTP service"
+        duration = max(0, int(event.get("duration_seconds") or 0))
+        minutes, seconds = divmod(duration, 60)
+        hours, minutes = divmod(minutes, 60)
+        duration_label = (
+            f"{hours}h {minutes}m {seconds}s" if hours
+            else f"{minutes}m {seconds}s"
+        )
+        return (
+            f"✅ {name}: monitored service recovered\n"
+            f"Service: {service_url}\n"
+            f"Recovered: {timestamp}\n"
+            f"Recorded incident duration: {duration_label}"
+        )
+
+    if kind == "network_quality_degraded":
+        target = event.get("target") or "configured target"
+        loss = event.get("packet_loss_percent")
+        latency = event.get("latency_avg_ms")
+        loss_label = f"{float(loss):.1f}%" if loss is not None else "unavailable"
+        latency_label = f"{float(latency):.1f} ms" if latency is not None else "unavailable"
+        return (
+            f"⚠️ {name}: network quality degraded\n"
+            f"Target: {target}\n"
+            f"Packet loss: {loss_label}\n"
+            f"Average latency: {latency_label}\n"
+            "Configured quality thresholds were exceeded for consecutive checks. "
+            "ICMP filtering may affect these measurements."
+        )
+
+    if kind == "network_quality_recovered":
+        target = event.get("target") or "configured target"
+        end_time = event.get("end_time") or "time unavailable"
+        duration = max(0, int(event.get("duration_seconds") or 0))
+        minutes, seconds = divmod(duration, 60)
+        hours, minutes = divmod(minutes, 60)
+        duration_label = (
+            f"{hours}h {minutes}m {seconds}s" if hours
+            else f"{minutes}m {seconds}s"
+        )
+        peak_loss = event.get("peak_packet_loss_percent")
+        peak_latency = event.get("peak_latency_ms")
+        loss_label = f"{float(peak_loss):.1f}%" if peak_loss is not None else "unavailable"
+        latency_label = f"{float(peak_latency):.1f} ms" if peak_latency is not None else "unavailable"
+        return (
+            f"✅ {name}: network quality recovered\n"
+            f"Target: {target}\n"
+            f"Recovered: {end_time}\n"
+            f"Incident duration: {duration_label}\n"
+            f"Peak packet loss: {loss_label} · peak average latency: {latency_label}"
+        )
+
     return f"{name}: monitoring event recorded."
 
 

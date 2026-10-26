@@ -20,9 +20,16 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 - **Availability statistics** over a requested time window.
 - **Measurement coverage reporting** so missing data is not silently counted as uptime.
 - **CSV export** for sharing or further analysis.
-- **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and optional configured HTTP(S) services.
+- **On-demand diagnosis** comparing the local gateway, public targets, system DNS resolution, and configured HTTP(S) services.
+- **Continuous HTTP(S) service monitoring** with response times, HTTP status codes, persistent check history, confirmed service incidents, and Telegram outage/recovery alerts.
+- **Network quality sampling** using multiple ICMP packets per target to estimate packet loss, min/average/max latency, and jitter where supported by the system ping output.
+- **Sustained degradation detection** with consecutive-round thresholds and Telegram recovery notifications.
+- **Reliability reporting** combining time-based network availability with measurement coverage, service sample success rates, quality measurements, and incident durations.
 - **Optional Telegram alerts** on confirmed outage start and recovery transitions, with consecutive-check thresholds to reduce transient false alarms.
 - **JSON API** with an interactive API explorer at `/docs`.
+- **Separate dashboard pages** for overview, connectivity, service monitoring, network quality, diagnosis, incidents, reports, and settings.
+- **Account access** with manual email/password registration and login, signed sessions, CSRF checks on forms, and optional Google OAuth sign-in.
+- **Dark mode by default** with a saved light/dark preference.
 - **Lightweight local deployment** with Python and a local database.
 
 ## Technology
@@ -39,9 +46,10 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 2. The monitor pings each configured target and records the timestamp, reachability, latency when available, and any error message.
 3. Records are stored in SQLite and used to build status, history, outage, and statistics responses.
 4. The dashboard requests the API and displays current status, latency, reachable targets, recent checks, and outage information.
-5. An on-demand diagnostic compares the local gateway, public targets, DNS resolution, and any configured HTTP service URLs.
-6. Outages are recorded only after consecutive complete failed rounds; recovery requires consecutive successful rounds. Optional Telegram alerts are sent on those transitions.
-7. A CSV endpoint exports measurements and relevant outage records.
+5. An on-demand diagnostic compares the local gateway, public targets, DNS resolution, and configured HTTP service URLs.
+6. A separate scheduled job checks configured HTTP(S) services, records response codes and response times in SQLite, and tracks service-specific incidents.
+7. Internet and service incidents require consecutive failed checks before being confirmed and consecutive successful checks before recovery. Optional Telegram alerts are emitted only for confirmed transitions.
+8. CSV and JSON report endpoints expose measurements and incident history.
 
 ### A note on availability statistics
 
@@ -61,6 +69,10 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 cp .env.example .env
+
+# Set a private session-signing key (keeps login sessions secure across restarts).
+SESSION_SECRET=$(openssl rand -hex 32)
+sed -i "s|^SESSION_SECRET_KEY=.*|SESSION_SECRET_KEY=$SESSION_SECRET|" .env
 ```
 
 Check that the system can run ping:
@@ -77,9 +89,24 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 Then open:
 
-- Dashboard: http://127.0.0.1:8000
-- API explorer: http://127.0.0.1:8000/docs
+- Sign in: http://127.0.0.1:8000
+- Create an account: http://127.0.0.1:8000/register
+- Monitoring overview (after sign-in): http://127.0.0.1:8000/dashboard
+- API explorer: http://127.0.0.1:8000/docs (monitoring endpoints require a signed-in session)
 - Health check: http://127.0.0.1:8000/health
+
+The landing page is intentionally limited to sign-in, account creation, and contact information. The dashboard is split into independent feature pages to avoid one long scrolling page.
+
+### Google sign-in (optional)
+
+1. Create an OAuth 2.0 Web application client in Google Cloud Console.
+2. Register this authorized redirect URI for a local instance: `http://127.0.0.1:8000/auth/google/callback`.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`, then restart the app. The Google button is visible even when credentials are missing; in that case the app displays a configuration message and manual email/password registration still works.
+4. Optional footer contact email can be set with `CONTACT_EMAIL`.
+
+The app uses a signed session cookie. Keep `SESSION_SECRET_KEY` private and set `SESSION_COOKIE_SECURE=true` only when the app is served over HTTPS. The default `false` is intended for local HTTP development.
+
+> **Account scope:** this prototype authenticates access to one self-hosted monitoring workspace. Monitoring targets, service URLs, history, incidents, and Telegram configuration are currently instance-wide and shared by signed-in accounts; they are not private per-user workspaces. Do not expose this as a public multi-tenant service until per-user monitoring configuration and record ownership are implemented.
 
 Stop the server with `Ctrl+C`.
 
@@ -91,7 +118,7 @@ With the virtual environment activated and dependencies installed, run the stand
 python -m unittest discover -s tests -v
 ```
 
-The tests cover monitoring persistence, outage start/recovery thresholds, alert-message formatting, diagnostic scenarios, and the rule that long measurement gaps must not be counted as uptime.
+The tests cover monitoring persistence, service incident thresholds, packet-loss parsing, quality degradation/recovery, Telegram alert formatting, reliability reporting, diagnostic scenarios, password hashing/verification, CSRF token validation, and the rule that long measurement gaps must not be counted as uptime.
 
 ## Connectivity diagnosis
 
@@ -110,12 +137,26 @@ Edit the local `.env` file before launching the application:
 | Setting | Purpose | Default |
 | --- | --- | --- |
 | `APP_NAME` | Name shown by the application | `EthioNet Pulse` |
+| `SESSION_SECRET_KEY` | Secret used to sign session cookies; generate a private random value | empty in `.env.example` |
+| `SESSION_COOKIE_SECURE` | Require HTTPS for the session cookie | `false` for local HTTP |
+| `GOOGLE_CLIENT_ID` | Optional Google OAuth client ID | empty |
+| `GOOGLE_CLIENT_SECRET` | Optional Google OAuth client secret | empty |
+| `CONTACT_EMAIL` | Optional contact email shown on the sign-in pages | empty (GitHub contact link shown) |
 | `DATABASE_URL` | SQLite database location | `sqlite+aiosqlite:///./data/ethionet.db` |
 | `CHECK_INTERVAL_SECONDS` | Time between check cycles | `30` |
 | `INTERNET_TARGETS` | Comma-separated hosts/IP addresses to check | `1.1.1.1,8.8.8.8,9.9.9.9` |
 | `REQUEST_TIMEOUT_SECONDS` | Per-target ping timeout | `5` |
 | `DNS_TEST_HOSTS` | Comma-separated hostnames for resolver checks | `example.com,cloudflare.com` |
-| `SERVICE_URLS` | Optional comma-separated HTTP(S) service URLs | empty |
+| `SERVICE_URLS` | Comma-separated HTTP(S) services for monitoring and diagnosis | `https://example.com` in `.env.example` |
+| `SERVICE_REQUEST_TIMEOUT_SECONDS` | HTTP service request timeout | `10` |
+| `SERVICE_FAILURE_THRESHOLD` | Consecutive failed service checks required for an incident | `2` |
+| `SERVICE_RECOVERY_THRESHOLD` | Consecutive successful service checks required for recovery | `2` |
+| `PING_SAMPLES_PER_CHECK` | Packets sent per quality sample (1–20) | `5` |
+| `QUALITY_PING_TIMEOUT_SECONDS` | Per-packet ICMP response timeout | `1` |
+| `PACKET_LOSS_WARNING_PERCENT` | Packet loss warning threshold | `20.0` |
+| `HIGH_LATENCY_WARNING_MS` | Average latency warning threshold | `400.0` |
+| `DEGRADATION_CONSECUTIVE_ROUNDS` | Degraded rounds required to open a quality incident | `3` |
+| `QUALITY_RECOVERY_CONSECUTIVE_ROUNDS` | Healthy rounds required to resolve a quality incident | `3` |
 | `OUTAGE_FAILURE_THRESHOLD` | Consecutive complete failed rounds needed to confirm an outage | `2` |
 | `OUTAGE_RECOVERY_THRESHOLD` | Consecutive successful rounds needed to confirm recovery | `2` |
 | `ENABLE_TELEGRAM_ALERTS` | Enable Telegram outage/recovery notifications | `false` |
@@ -140,7 +181,14 @@ Never commit your real bot token or private chat configuration to GitHub.
 | --- | --- | --- |
 | GET | `/health` | Verify that the application is responding |
 | GET | `/api/status` | Current status for configured targets |
-| GET | `/api/diagnose` | On-demand gateway and public-target checks with cautious troubleshooting guidance |
+| GET | `/api/diagnose` | On-demand gateway, public-target, DNS, and configured HTTP service checks |
+| GET | `/api/services` | Latest status for each configured HTTP service |
+| GET | `/api/services/history?limit=100` | Stored HTTP service check history |
+| GET | `/api/service-outages?limit=10` | Confirmed service incidents and recovery durations |
+| GET | `/api/quality` | Latest packet loss and latency quality for each network target |
+| GET | `/api/quality/history?limit=100` | Historical multi-packet quality samples |
+| GET | `/api/quality-incidents?limit=10` | Sustained degradation and recovery incidents |
+| GET | `/api/reports/reliability?hours=24` | JSON summary of network, service, and quality reliability |
 | GET | `/api/history?limit=100` | Recent connectivity checks |
 | GET | `/api/outages?limit=100` | Recent outage records |
 | GET | `/api/statistics?hours=24` | Availability, measurement coverage, latency, and outage summaries |
@@ -156,19 +204,21 @@ For the summer-camp presentation:
 1. Start the app and show the dashboard updating from the local API.
 2. Point out reachable targets, average latency, recent checks, and outage information.
 3. Open `/docs` and run `/health`, `/api/status`, and `/api/statistics?hours=24`.
-4. Export the CSV and briefly show the measurements it contains.
-5. Click **Run diagnosis** and explain how local-gateway and external-target results guide troubleshooting without proving root cause.
-6. Explain the monitoring loop, SQLite history, and why gaps are not automatically counted as uptime.
+4. Show the continuously monitored HTTP service and its response code, response time, history, and confirmed incident section.
+5. Show packet loss, latency, and jitter samples, then explain that sustained quality degradation triggers an alert only after consecutive checks.
+6. Open the reliability summary and export the CSV to show measurements and incident history; point out that sample success rate is not the same as time-based uptime.
+7. Click **Run diagnosis** and explain how gateway, DNS, public-target, and HTTP results guide troubleshooting without claiming definitive root cause.
 
-See [the presentation video script](docs/DEMO_SCRIPT.md) for a concise speaking outline.
+A private speaking outline is maintained separately from this public repository.
 
 ## Known limitations and future work
 
-- ICMP ping can be blocked by a destination or network even when other services work; a failed ping alone is not proof that all internet access is unavailable.
-- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
-- HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works.
+- ICMP ping can be blocked by a destination or network even when other services work; packet-loss warnings require context and are not proof that all internet access is unavailable. Compare them with HTTP checks where possible.
+- This remains a local, single-instance monitoring workspace. Accounts gate access to the app, but all signed-in accounts currently use the same instance-wide monitor settings, service list, history, incident records, and Telegram destination. Do not use this configuration for unrelated customer tenants until per-user ownership and query-level data isolation are implemented.
+- Manual registration does not yet include email verification or password recovery. Google sign-in needs an OAuth client configured by the operator. Before public deployment, add rate limiting, email verification/recovery, production HTTPS, and a persistent secret manager for session secrets.
+- HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works. Configure safe GET-compatible health endpoints and avoid embedding credentials or secrets in URL query strings.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
-- Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
+- Multi-site monitoring, per-account monitoring configuration, data isolation between customer tenants, a hosted service, and automatic root-cause detection remain future work.
 
 ## Author
 

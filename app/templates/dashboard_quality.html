@@ -1,0 +1,31 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="panel quality-panel">
+  <div class="panel-heading">
+    <div><h2>Latest network quality</h2><p class="panel-subtitle">Packet loss, average latency, and jitter from multi-packet ICMP samples.</p></div>
+    <span class="count-label" id="quality-target-count">0 targets</span>
+  </div>
+  <div class="quality-list" id="quality-list" aria-live="polite"><div class="loading-row">Loading network quality measurements…</div></div>
+  <p class="panel-footnote">Some networks and destinations filter ICMP. Packet loss is a signal to investigate, not proof that all applications are unavailable.</p>
+</section>
+
+<section class="panel section-gap">
+  <div class="panel-heading">
+    <div><h2>Recent quality samples</h2><p class="panel-subtitle">Measured packet delivery and response-time statistics.</p></div>
+    <span class="count-label" id="quality-history-count">Loading…</span>
+  </div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>TARGET</th><th>STATE</th><th>PACKET LOSS</th><th>AVERAGE LATENCY</th><th>JITTER</th><th>TIME</th></tr></thead>
+    <tbody id="quality-history-list"><tr><td colspan="6" class="loading-row">Loading quality history…</td></tr></tbody>
+  </table></div>
+</section>
+
+<section class="panel section-gap">
+  <div class="panel-heading">
+    <div><h2>Quality incidents</h2><p class="panel-subtitle">Sustained degradation and recovery history.</p></div>
+    <span class="count-label" id="quality-incident-count">0 incidents</span>
+  </div>
+  <div class="service-outage-list" id="quality-incident-list"><div class="loading-row">Loading quality incidents…</div></div>
+</section>
+
+{% endblock %}
