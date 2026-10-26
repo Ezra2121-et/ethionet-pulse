@@ -13,7 +13,11 @@ def safe_service_url(value: str) -> str | None:
     except (TypeError, ValueError):
         return None
 
-    if scheme not in {"http", "https"} or not hostname:
+    if (
+        scheme not in {"http", "https"}
+        or not hostname
+        or any(char.isspace() for char in (value or ""))
+    ):
         return None
 
     # Preserve IPv6 host syntax and explicit ports, but never user-info.
