@@ -245,3 +245,51 @@ html[data-theme="dark"] .auth-submit { color: #09130d; }
   .auth-heading h1 { font-size: 26px; }
   .auth-footer { flex-direction: column; gap: 11px; }
 }
+
+/* Small-screen and landscape refinements for sign-in and registration. */
+.auth-brand,
+.auth-topbar,
+.auth-footer,
+.auth-contact {
+  min-width: 0;
+}
+.auth-contact a { overflow-wrap: anywhere; }
+
+@media (max-width: 360px) {
+  .auth-shell { padding: 0 10px; }
+  .auth-topbar { min-height: 64px; gap: 8px; }
+  .auth-brand { gap: 8px; font-size: 15px; }
+  .auth-brand-mark {
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+  }
+  .auth-brand-mark svg { width: 28px; height: 28px; }
+  .auth-topbar .theme-toggle {
+    width: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    padding: 0;
+  }
+  .auth-topbar #theme-toggle-label { display: none; }
+  .auth-card { padding: 22px 16px 20px; }
+  .register-card { margin: 14px auto; }
+  .auth-heading h1 { font-size: 24px; }
+  .auth-form input,
+  .auth-submit,
+  .google-button { min-height: 46px; }
+  .auth-footer { overflow-wrap: anywhere; }
+  .auth-contact { gap: 8px; }
+}
+
+@media (max-height: 520px) and (orientation: landscape) {
+  .auth-shell { min-height: 100svh; }
+  .auth-topbar { min-height: 58px; }
+  .auth-card { margin: 10px auto; }
+  .register-card { margin: 10px auto; }
+  .auth-footer {
+    margin-top: 8px;
+    padding-top: 12px;
+    padding-bottom: 14px;
+  }
+}

@@ -1286,3 +1286,179 @@ html[data-theme="dark"] .report-note p { color: #a9c1b0; }
   html[data-theme="dark"] .reliability-card:nth-child(n+3) { border-top-color: #293a31; }
 }
 
+
+
+/* Responsive refinements: prevent clipped controls and improve touch layouts. */
+.site-header-inner,
+.main-content,
+.app-footer,
+.panel,
+.metrics-grid,
+.status-banner,
+.quick-access-link,
+.service-card,
+.quality-card,
+.diagnosis-probe {
+  min-width: 0;
+}
+.table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.table-wrap table {
+  width: max-content;
+  min-width: 100%;
+}
+.nav-links {
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
+}
+.nav-link { flex-shrink: 0; }
+.topbar > div:first-child { min-width: 0; }
+.status-copy { overflow-wrap: anywhere; }
+.service-url,
+.service-incident-url,
+.settings-prose,
+.report-note,
+.page-error {
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 850px) {
+  .header-account {
+    max-width: 100%;
+    min-width: 0;
+  }
+  .account-name { display: none; }
+  .service-incident-side { max-width: 100%; }
+  .settings-row > div { min-width: 0; }
+}
+
+@media (max-width: 600px) {
+  .site-header-inner {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+  }
+  .brand {
+    grid-column: 1;
+    grid-row: 1;
+    min-width: 0;
+  }
+  .header-account {
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0;
+    min-width: 0;
+    flex-wrap: nowrap;
+    gap: 6px;
+  }
+  .header-account .theme-toggle,
+  .header-account .logout-button {
+    min-height: 40px;
+    padding: 0 9px;
+  }
+  .nav-links {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    order: 0;
+    flex-basis: auto;
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    gap: 4px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scroll-snap-type: x proximity;
+  }
+  .nav-link {
+    min-height: 40px;
+    scroll-snap-align: start;
+  }
+  .target-card {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 8px;
+  }
+  .target-latency { text-align: left; }
+  .outage-item,
+  .service-incident {
+    min-width: 0;
+    flex-wrap: wrap;
+  }
+  .outage-end,
+  .service-incident-side {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 7px;
+    width: 100%;
+    max-width: 100%;
+    text-align: left;
+  }
+  .settings-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .settings-row > :last-child { align-self: flex-start; }
+  .panel-heading > div:first-child { min-width: 0; }
+  .range-label,
+  .count-label {
+    flex-shrink: 1;
+    overflow-wrap: anywhere;
+  }
+}
+
+@media (max-width: 380px) {
+  .header-account .theme-toggle {
+    width: 40px;
+    min-width: 40px;
+    padding: 0;
+  }
+  .header-account #theme-toggle-label { display: none; }
+  .header-account .logout-button {
+    min-height: 40px;
+    padding: 0 8px;
+    font-size: 11px;
+  }
+  .nav-link {
+    padding: 0 9px;
+    font-size: 11.5px;
+  }
+  .status-banner { gap: 9px; }
+  .status-emblem {
+    flex-basis: 32px;
+    height: 32px;
+  }
+  .panel-heading { flex-direction: column; }
+  .range-label,
+  .count-label {
+    align-self: flex-start;
+    max-width: 100%;
+    text-align: left;
+  }
+}
+
+@media (pointer: coarse) {
+  .nav-link,
+  .theme-toggle,
+  .logout-button,
+  .refresh-button {
+    min-height: 44px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *,
+  *::before,
+  *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
