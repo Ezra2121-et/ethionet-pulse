@@ -10,7 +10,7 @@ import shutil
 import time
 from datetime import datetime, timezone
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlunparse
 
 import httpx
 
@@ -118,9 +118,24 @@ async def check_dns_host(host: str, timeout_seconds: float = 3.0) -> dict[str, A
             "resolved": None,
             "address_count": 0,
             "latency_ms": round((time.perf_counter() - started) * 1000, 2),
-            "error_message": (str(exc) or type(exc).__name__)[:200],
+            "error_message": f"HTTP request failed: {type(exc).__name__}",
             "probe_completed": False,
         }
+
+
+
+def _safe_service_url(url: str) -> str:
+    """Display configured service URLs without credentials, query strings, or fragments."""
+    parsed = urlparse(url)
+    if parsed.scheme not in {"http", "https"} or not parsed.hostname:
+        return "Invalid HTTP(S) URL configured"
+    try:
+        host = parsed.hostname
+        if parsed.port:
+            host = f"{host}:{parsed.port}"
+    except ValueError:
+        return "Invalid HTTP(S) URL configured"
+    return urlunparse((parsed.scheme, host, parsed.path or "/", "", "", ""))
 
 
 async def check_http_service(url: str, timeout_seconds: float = 5.0) -> dict[str, Any]:
@@ -128,7 +143,7 @@ async def check_http_service(url: str, timeout_seconds: float = 5.0) -> dict[str
     parsed = urlparse(url)
     if parsed.scheme not in {"http", "https"} or not parsed.hostname:
         return {
-            "url": url,
+            "url": _safe_service_url(url),
             "host": parsed.hostname,
             "status": "error",
             "http_status_code": None,
