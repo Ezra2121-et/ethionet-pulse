@@ -34,6 +34,9 @@
       <a class="nav-link" href="#targets">
         <span class="nav-symbol">⌁</span> Connectivity
       </a>
+      <a class="nav-link" href="#services">
+        <span class="nav-symbol">◎</span> Service monitoring
+      </a>
       <a class="nav-link" href="#outages">
         <span class="nav-symbol">◷</span> Outage history
       </a>
@@ -200,6 +203,35 @@
           Reachability is tested using ICMP ping.
         </div>
       </article>
+    </section>
+
+    <section class="panel service-monitoring-panel" id="services">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">APPLICATION AVAILABILITY</p>
+          <h2>Monitored HTTP services</h2>
+          <p class="panel-subtitle">
+            Configured websites and health endpoints checked automatically on the monitoring schedule.
+          </p>
+        </div>
+        <span class="count-label" id="service-count">0 services</span>
+      </div>
+      <div class="service-list" id="service-list" aria-live="polite">
+        <div class="loading-row">Loading configured services…</div>
+      </div>
+      <div class="service-incidents-heading">
+        <div>
+          <h3>Recent service incidents</h3>
+          <p class="panel-subtitle">Confirmed failures and recovery durations.</p>
+        </div>
+        <span class="count-label" id="service-incident-count">0 incidents</span>
+      </div>
+      <div class="service-outage-list" id="service-outage-list">
+        <div class="loading-row">Loading service incidents…</div>
+      </div>
+      <p class="panel-footnote">
+        HTTP 2xx–3xx responses count as healthy. This checks endpoint availability, not every function inside an application.
+      </p>
     </section>
 
     <section class="bottom-grid">
