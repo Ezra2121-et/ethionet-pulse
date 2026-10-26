@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.config import settings
 from app.database import get_db
 from app.models import ConnectivityCheck, Outage
+from app.monitoring.diagnostics import run_connectivity_diagnosis
 
 router = APIRouter(prefix="/api", tags=["monitoring"])
 
@@ -43,6 +44,12 @@ def _outage_dict(outage: Outage) -> dict:
         "is_resolved": outage.is_resolved,
         "notes": outage.notes,
     }
+
+
+@router.get("/diagnose")
+async def diagnose_connectivity() -> dict:
+    """Run an on-demand gateway and external-target reachability diagnosis."""
+    return await run_connectivity_diagnosis()
 
 
 @router.get("/status")
