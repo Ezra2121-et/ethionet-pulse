@@ -11,6 +11,7 @@ from app.config import settings
 from app.database import Base, engine
 from app.monitoring.checker import run_connectivity_checks
 from app.monitoring.services import run_service_checks
+from app.monitoring.quality import run_network_quality_checks
 from app.api.routes import router
 from app.api.statistics import router as statistics_router
 from app.api.reports import router as reports_router
@@ -49,6 +50,13 @@ async def lifespan(app: FastAPI):
             "Initial HTTP service check failed; the API will still start."
         )
 
+    try:
+        await run_network_quality_checks()
+    except Exception:
+        logger.exception(
+            "Initial network quality check failed; the API will still start."
+        )
+
     scheduler = AsyncIOScheduler(timezone="UTC")
     scheduler.add_job(
         run_connectivity_checks,
@@ -64,6 +72,15 @@ async def lifespan(app: FastAPI):
         trigger="interval",
         seconds=max(5, settings.CHECK_INTERVAL_SECONDS),
         id="http_service_checks",
+        replace_existing=True,
+        max_instances=1,
+        coalesce=True,
+    )
+    scheduler.add_job(
+        run_network_quality_checks,
+        trigger="interval",
+        seconds=max(5, settings.CHECK_INTERVAL_SECONDS),
+        id="network_quality_checks",
         replace_existing=True,
         max_instances=1,
         coalesce=True,
