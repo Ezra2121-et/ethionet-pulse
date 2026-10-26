@@ -414,6 +414,58 @@ function renderStatistics(payload) {
     `Measured ${Number.isFinite(measured) ? measured.toFixed(1) : "0.0"}% · known state ${Number.isFinite(known) ? known.toFixed(1) : "0.0"}%`;
 }
 
+
+function renderDiagnosis(payload) {
+  const root = $("diagnosis-result");
+  root.replaceChildren();
+
+  const heading = element("h3", "diagnosis-title", payload.diagnosis.title);
+  const summary = element("p", "diagnosis-summary", payload.diagnosis.summary);
+  const next = element("p", "diagnosis-next", `Recommended next step: ${payload.diagnosis.next_step}`);
+  root.append(heading, summary, next);
+
+  const probes = element("div", "diagnosis-probes");
+  const gateway = payload.gateway || {};
+  probes.append(makeProbeCard("Local gateway", gateway));
+  for (const target of (payload.external_targets || [])) {
+    probes.append(makeProbeCard(target.target, target));
+  }
+  root.append(probes);
+
+  const note = element("p", "diagnosis-note", payload.note || "Results may be affected by ICMP filtering.");
+  root.append(note);
+}
+
+function makeProbeCard(label, probe) {
+  const card = element("div", "diagnosis-probe");
+  card.append(
+    element("strong", "", label || "Local gateway"),
+    makeChip(probe.status || "error"),
+    element("small", "", probe.latency_ms === null || probe.latency_ms === undefined
+      ? (probe.error_message || "No response time available")
+      : formatLatency(probe.latency_ms))
+  );
+  return card;
+}
+
+async function runDiagnosis() {
+  const button = $("diagnose-button");
+  const root = $("diagnosis-result");
+  button.disabled = true;
+  button.textContent = "Checking…";
+  root.replaceChildren(element("p", "diagnosis-placeholder", "Checking the local gateway and configured public targets…"));
+  try {
+    const result = await getJson("/api/diagnose");
+    renderDiagnosis(result);
+  } catch (error) {
+    console.error("Connectivity diagnosis failed:", error);
+    root.replaceChildren(element("p", "diagnosis-error", "Diagnosis could not run. Check the server terminal and try again."));
+  } finally {
+    button.disabled = false;
+    button.textContent = "Run diagnosis";
+  }
+}
+
 async function refreshDashboard() {
   const button = $("refresh-button");
   const icon = $("refresh-icon");
@@ -453,6 +505,7 @@ async function refreshDashboard() {
 }
 
 $("refresh-button").addEventListener("click", refreshDashboard);
+$("diagnose-button").addEventListener("click", runDiagnosis);
 window.addEventListener("resize", () => {
   // Refreshing redraws the chart using its new container dimensions.
   refreshDashboard();
