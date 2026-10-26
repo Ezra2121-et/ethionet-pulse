@@ -6,7 +6,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.models import ConnectivityCheck, Outage
+from app.models import ConnectivityCheck, Outage, ServiceCheck, ServiceOutage
+from app.monitoring.urls import safe_service_url
 from app.monitoring.diagnostics import run_connectivity_diagnosis
 
 router = APIRouter(prefix="/api", tags=["monitoring"])
@@ -186,3 +187,140 @@ async def get_outages(
         "count": len(rows),
         "items": [_outage_dict(row) for row in rows],
     }
+
+
+
+@router.get("/services")
+async def get_services(
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return the latest scheduled check for each configured HTTP service."""
+    configured_urls: list[str] = []
+    for raw_url in settings.service_urls_list:
+        safe_url = safe_service_url(raw_url)
+        if safe_url and safe_url not in configured_urls:
+            configured_urls.append(safe_url)
+
+    latest_by_url: dict[str, ServiceCheck] = {}
+    if configured_urls:
+        statement = (
+            select(ServiceCheck)
+            .where(ServiceCheck.service_url.in_(configured_urls))
+            .order_by(ServiceCheck.timestamp.desc(), ServiceCheck.id.desc())
+            .limit(2000)
+        )
+        rows = (await db.scalars(statement)).all()
+        for row in rows:
+            latest_by_url.setdefault(row.service_url, row)
+
+    items = []
+    for service_url in configured_urls:
+        check = latest_by_url.get(service_url)
+        if check is None:
+            status = "pending"
+        elif not check.probe_completed:
+            status = "error"
+        else:
+            status = "online" if check.is_up else "offline"
+
+        items.append({
+            "service_url": service_url,
+            "status": status,
+            "is_up": check.is_up if check else None,
+            "http_status_code": check.http_status_code if check else None,
+            "response_time_ms": check.response_time_ms if check else None,
+            "timestamp": _iso(check.timestamp) if check else None,
+            "error_message": check.error_message if check else None,
+        })
+
+    return {
+        "configured_count": len(configured_urls),
+        "online_count": sum(item["status"] == "online" for item in items),
+        "offline_count": sum(item["status"] == "offline" for item in items),
+        "items": items,
+    }
+
+
+@router.get("/services/history")
+async def get_service_history(
+    limit: int = Query(default=100, ge=1, le=1000),
+    service_url: str | None = Query(default=None, max_length=512),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return historical HTTP service measurements, optionally for one URL."""
+    statement = select(ServiceCheck)
+    if service_url:
+        safe_url = safe_service_url(service_url)
+        if not safe_url:
+            return {"count": 0, "items": []}
+        statement = statement.where(ServiceCheck.service_url == safe_url)
+
+    statement = statement.order_by(
+        ServiceCheck.timestamp.desc(), ServiceCheck.id.desc()
+    ).limit(limit)
+    rows = (await db.scalars(statement)).all()
+
+    return {
+        "count": len(rows),
+        "items": [
+            {
+                "id": row.id,
+                "timestamp": _iso(row.timestamp),
+                "service_url": row.service_url,
+                "status": (
+                    "error" if not row.probe_completed
+                    else "online" if row.is_up
+                    else "offline"
+                ),
+                "is_up": row.is_up,
+                "probe_completed": row.probe_completed,
+                "http_status_code": row.http_status_code,
+                "response_time_ms": row.response_time_ms,
+                "error_message": row.error_message,
+            }
+            for row in rows
+        ],
+    }
+
+
+@router.get("/service-outages")
+async def get_service_outages(
+    limit: int = Query(default=10, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return recent confirmed HTTP service outages and recoveries."""
+    statement = (
+        select(ServiceOutage)
+        .order_by(ServiceOutage.start_time.desc(), ServiceOutage.id.desc())
+        .limit(limit)
+    )
+    rows = (await db.scalars(statement)).all()
+
+    now = datetime.now(timezone.utc)
+    items = []
+    for row in rows:
+        start = row.start_time
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        end = row.end_time
+        if end is None and not row.is_resolved:
+            duration = max(0, int((now - start).total_seconds()))
+        elif end is not None:
+            normalized_end = end if end.tzinfo else end.replace(tzinfo=timezone.utc)
+            duration = row.duration_seconds
+            if duration is None:
+                duration = max(0, int((normalized_end - start).total_seconds()))
+        else:
+            duration = row.duration_seconds
+
+        items.append({
+            "id": row.id,
+            "service_url": row.service_url,
+            "start_time": _iso(row.start_time),
+            "end_time": _iso(row.end_time),
+            "duration_seconds": duration,
+            "is_resolved": row.is_resolved,
+            "notes": row.notes,
+        })
+
+    return {"count": len(items), "items": items}
