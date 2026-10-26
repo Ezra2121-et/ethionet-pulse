@@ -61,7 +61,7 @@ async def probe_service_url(raw_url: str, client: httpx.AsyncClient) -> dict[str
             "response_time_ms": round((time.perf_counter() - started) * 1000, 2),
             "error_message": "HTTP request timed out",
         }
-    except httpx.RequestError as exc:
+    except (httpx.RequestError, httpx.InvalidURL) as exc:
         # Never include str(exc): HTTP client errors can include the full URL,
         # including credentials or query parameters from operator configuration.
         return {
