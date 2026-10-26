@@ -170,7 +170,8 @@ A private speaking outline is maintained separately from this public repository.
 
 ## Known limitations and future work
 
-- ICMP ping can be blocked by a destination or network even when other services work; packet-loss warnings require context and are not proof that all internet access is unavailable. Compare them with HTTP checks where possible.\n- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
+- ICMP ping can be blocked by a destination or network even when other services work; packet-loss warnings require context and are not proof that all internet access is unavailable. Compare them with HTTP checks where possible.
+- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
 - HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works. Configure safe GET-compatible health endpoints and avoid embedding credentials or secrets in URL query strings.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
 - Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
