@@ -45,9 +45,9 @@ def format_outage_message(event: dict[str, Any]) -> str:
         timestamp = event.get("start_time") or "time unavailable"
         service_url = event.get("service_url") or "configured HTTP service"
         return (
-            f"🚨 {name}: monitored service is down\\n"
-            f"Service: {service_url}\\n"
-            f"Confirmed: {timestamp}\\n"
+            f"🚨 {name}: monitored service is down\n"
+            f"Service: {service_url}\n"
+            f"Confirmed: {timestamp}\n"
             "The endpoint failed the required consecutive checks. "
             "Verify the service and network before concluding the cause."
         )
@@ -63,9 +63,9 @@ def format_outage_message(event: dict[str, Any]) -> str:
             else f"{minutes}m {seconds}s"
         )
         return (
-            f"✅ {name}: monitored service recovered\\n"
-            f"Service: {service_url}\\n"
-            f"Recovered: {timestamp}\\n"
+            f"✅ {name}: monitored service recovered\n"
+            f"Service: {service_url}\n"
+            f"Recovered: {timestamp}\n"
             f"Recorded incident duration: {duration_label}"
         )
 
@@ -76,10 +76,10 @@ def format_outage_message(event: dict[str, Any]) -> str:
         loss_label = f"{float(loss):.1f}%" if loss is not None else "unavailable"
         latency_label = f"{float(latency):.1f} ms" if latency is not None else "unavailable"
         return (
-            f"⚠️ {name}: network quality degraded\\n"
-            f"Target: {target}\\n"
-            f"Packet loss: {loss_label}\\n"
-            f"Average latency: {latency_label}\\n"
+            f"⚠️ {name}: network quality degraded\n"
+            f"Target: {target}\n"
+            f"Packet loss: {loss_label}\n"
+            f"Average latency: {latency_label}\n"
             "Configured quality thresholds were exceeded for consecutive checks. "
             "ICMP filtering may affect these measurements."
         )
@@ -99,10 +99,10 @@ def format_outage_message(event: dict[str, Any]) -> str:
         loss_label = f"{float(peak_loss):.1f}%" if peak_loss is not None else "unavailable"
         latency_label = f"{float(peak_latency):.1f} ms" if peak_latency is not None else "unavailable"
         return (
-            f"✅ {name}: network quality recovered\\n"
-            f"Target: {target}\\n"
-            f"Recovered: {end_time}\\n"
-            f"Incident duration: {duration_label}\\n"
+            f"✅ {name}: network quality recovered\n"
+            f"Target: {target}\n"
+            f"Recovered: {end_time}\n"
+            f"Incident duration: {duration_label}\n"
             f"Peak packet loss: {loss_label} · peak average latency: {latency_label}"
         )
 
