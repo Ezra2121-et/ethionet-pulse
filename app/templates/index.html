@@ -95,6 +95,21 @@
       </div>
     </section>
 
+
+    <section class="panel diagnosis-panel" aria-labelledby="diagnosis-heading">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">TROUBLESHOOTING</p>
+          <h2 id="diagnosis-heading">Connectivity diagnosis</h2>
+          <p class="panel-subtitle">Compare your local gateway with public targets to help narrow down where a problem may be.</p>
+        </div>
+        <button class="refresh-button" id="diagnose-button" type="button">Run diagnosis</button>
+      </div>
+      <div class="diagnosis-body" id="diagnosis-result" aria-live="polite">
+        <p class="diagnosis-placeholder">Run a check to compare the local gateway with public destinations. This is a clue, not proof of the root cause.</p>
+      </div>
+    </section>
+
     <section class="metrics-grid" aria-label="Network summary">
       <article class="metric-card">
         <div class="metric-heading">
