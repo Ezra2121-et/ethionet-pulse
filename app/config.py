@@ -18,6 +18,9 @@ class Settings(BaseSettings):
     REQUEST_TIMEOUT_SECONDS: int = 5
     DNS_TEST_HOSTS: str = "example.com,cloudflare.com"
     SERVICE_URLS: str = ""
+    SERVICE_REQUEST_TIMEOUT_SECONDS: int = 10
+    SERVICE_FAILURE_THRESHOLD: int = 2
+    SERVICE_RECOVERY_THRESHOLD: int = 2
 
     # An outage is confirmed after this many consecutive failed check rounds.
     OUTAGE_FAILURE_THRESHOLD: int = 2
