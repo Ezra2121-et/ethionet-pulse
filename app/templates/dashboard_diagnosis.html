@@ -1,0 +1,12 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="panel diagnosis-panel" id="diagnosis">
+  <div class="panel-heading">
+    <div><h2>Connectivity diagnosis</h2><p class="panel-subtitle">Compare the local gateway with external targets, DNS, and configured HTTP services.</p></div>
+    <button class="refresh-button" id="diagnose-button" type="button">Run diagnosis</button>
+  </div>
+  <div class="diagnosis-body" id="diagnosis-result" aria-live="polite">
+    <p class="diagnosis-placeholder">Run a check to compare the local gateway with public destinations. Results are clues, not proof of root cause.</p>
+  </div>
+</section>
+{% endblock %}
