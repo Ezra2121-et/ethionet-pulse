@@ -6,7 +6,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.models import (\n    ConnectivityCheck, Outage, ServiceCheck, ServiceOutage,\n    NetworkQualityCheck, NetworkQualityIncident,\n)\nfrom app.monitoring.urls import safe_service_url
+from app.models import (
+    ConnectivityCheck, Outage, ServiceCheck, ServiceOutage,
+    NetworkQualityCheck, NetworkQualityIncident,
+)
+from app.monitoring.urls import safe_service_url
 from app.monitoring.diagnostics import run_connectivity_diagnosis
 
 router = APIRouter(prefix="/api", tags=["monitoring"])
