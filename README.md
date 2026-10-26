@@ -117,6 +117,7 @@ Keep `.env` and local database files private; they are for local configuration a
 | --- | --- | --- |
 | GET | `/health` | Verify that the application is responding |
 | GET | `/api/status` | Current status for configured targets |
+| GET | `/api/diagnose` | On-demand gateway and public-target checks with cautious troubleshooting guidance |
 | GET | `/api/history?limit=100` | Recent connectivity checks |
 | GET | `/api/outages?limit=100` | Recent outage records |
 | GET | `/api/statistics?hours=24` | Availability, measurement coverage, latency, and outage summaries |
@@ -133,7 +134,8 @@ For the summer-camp presentation:
 2. Point out reachable targets, average latency, recent checks, and outage information.
 3. Open `/docs` and run `/health`, `/api/status`, and `/api/statistics?hours=24`.
 4. Export the CSV and briefly show the measurements it contains.
-5. Explain the monitoring loop, SQLite history, and why gaps are not automatically counted as uptime.
+5. Click **Run diagnosis** and explain how local-gateway and external-target results guide troubleshooting without proving root cause.
+6. Explain the monitoring loop, SQLite history, and why gaps are not automatically counted as uptime.
 
 See [the presentation video script](docs/DEMO_SCRIPT.md) for a concise speaking outline.
 
