@@ -2,58 +2,9 @@
 
 const $ = (id) => document.getElementById(id);
 
-const THEME_STORAGE_KEY = "ethionet-pulse-theme";
 let latestHistoryForChart = [];
 
-function applyTheme(theme) {
-  const selected = theme === "light" ? "light" : "dark";
-  document.documentElement.dataset.theme = selected;
 
-  const isDark = selected === "dark";
-  const button = $("theme-toggle");
-  const icon = $("theme-toggle-icon");
-  const label = $("theme-toggle-label");
-  const meta = document.querySelector('meta[name="theme-color"]');
-
-  if (button) {
-    const action = isDark ? "light" : "dark";
-    const actionLabel = isDark ? "Light mode" : "Dark mode";
-    button.setAttribute("aria-label", `Switch to ${action} theme`);
-    button.title = `Switch to ${action} theme`;
-    if (icon) icon.textContent = isDark ? "☀" : "☾";
-    if (label) label.textContent = actionLabel;
-  }
-  if (meta) meta.content = isDark ? "#0c1210" : "#f5f7f5";
-}
-
-function initializeThemeToggle() {
-  let savedTheme = "dark";
-  try {
-    const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    if (stored === "light" || stored === "dark") savedTheme = stored;
-  } catch (_error) {
-    // The dashboard still works with dark mode when storage is unavailable.
-  }
-  applyTheme(savedTheme);
-
-  const button = $("theme-toggle");
-  if (!button) return;
-
-  button.addEventListener("click", () => {
-    const nextTheme = document.documentElement.dataset.theme === "dark"
-      ? "light"
-      : "dark";
-    applyTheme(nextTheme);
-    try {
-      window.localStorage.setItem(THEME_STORAGE_KEY, nextTheme);
-    } catch (_error) {
-      // Theme toggling still works for this page if persistence is blocked.
-    }
-    drawChart(latestHistoryForChart);
-  });
-}
-
-initializeThemeToggle();
 
 const targetNames = {
   "1.1.1.1": "Cloudflare DNS",
@@ -268,10 +219,11 @@ function renderTargets(targets) {
 function renderHistory(history) {
   const items = Array.isArray(history.items) ? history.items : [];
   latestHistoryForChart = items;
-  $("recent-checks").textContent = items.length;
-  $("chart-range").textContent = `${items.length} recent samples`;
-  renderActivity(items);
-  drawChart(items);
+  if ($("recent-checks")) $("recent-checks").textContent = items.length;
+  if ($("recent-check-count")) $("recent-check-count").textContent = `${items.length} records`;
+  if ($("chart-range")) $("chart-range").textContent = `${items.length} recent samples`;
+  if ($("activity-list")) renderActivity(items);
+  if ($("latency-chart") && $("chart-empty")) drawChart(items);
 }
 
 function renderActivity(items) {
@@ -718,26 +670,30 @@ function renderStatistics(payload) {
   const hours = Number(payload.window_hours) || 24;
   const uptime = payload.uptime_percentage;
 
-  $("chart-range").textContent = uptime === null || uptime === undefined
-    ? `Uptime unavailable · ${hours}h`
-    : `${Number(uptime).toFixed(2)}% observed uptime · ${hours}h`;
+  if ($("chart-range")) {
+    $("chart-range").textContent = uptime === null || uptime === undefined
+      ? `Uptime unavailable · ${hours}h`
+      : `${Number(uptime).toFixed(2)}% observed uptime · ${hours}h`;
+  }
 
   const latency = payload.latency || {};
-  $("avg-latency").textContent = formatLatency(latency.average_ms);
+  if ($("avg-latency")) $("avg-latency").textContent = formatLatency(latency.average_ms);
 
-  if (latency.sample_count > 0) {
-    $("latency-detail").textContent =
-      `${latency.sample_count} samples · min ${formatLatency(latency.minimum_ms)} · max ${formatLatency(latency.maximum_ms)}`;
-  } else {
-    $("latency-detail").textContent =
-      "No successful latency samples in this period";
+  if ($("latency-detail")) {
+    if (latency.sample_count > 0) {
+      $("latency-detail").textContent =
+        `${latency.sample_count} samples · min ${formatLatency(latency.minimum_ms)} · max ${formatLatency(latency.maximum_ms)}`;
+    } else {
+      $("latency-detail").textContent = "No successful latency samples in this period";
+    }
   }
 
   const measured = Number(payload.measurement_coverage_percentage);
   const known = Number(payload.known_status_coverage_percentage);
-
-  $("stats-coverage").textContent =
-    `Measured ${Number.isFinite(measured) ? measured.toFixed(1) : "0.0"}% · known state ${Number.isFinite(known) ? known.toFixed(1) : "0.0"}%`;
+  if ($("stats-coverage")) {
+    $("stats-coverage").textContent =
+      `Measured ${Number.isFinite(measured) ? measured.toFixed(1) : "0.0"}% · known state ${Number.isFinite(known) ? known.toFixed(1) : "0.0"}%`;
+  }
 }
 
 
@@ -823,63 +779,232 @@ async function runDiagnosis() {
   }
 }
 
-async function refreshDashboard() {
-  const button = $("refresh-button");
-  const icon = $("refresh-icon");
+function setUpdated(text) {
+  const node = $("last-updated");
+  if (node) node.textContent = text;
+}
 
-  button.disabled = true;
-  icon.classList.add("spinning");
+function setPageError(message) {
+  const node = $("page-error");
+  if (!node) return;
+  node.textContent = message;
+  node.hidden = !message;
+}
 
-  try {
-    const [
-      status, history, outages, statistics, services, serviceOutages,
-      quality, qualityIncidents, reliability,
-    ] = await Promise.all([
-      getJson("/api/status"),
-      getJson("/api/history?limit=90"),
-      getJson("/api/outages?limit=10"),
-      getJson("/api/statistics?hours=24"),
-      getJson("/api/services"),
-      getJson("/api/service-outages?limit=10"),
-      getJson("/api/quality"),
-      getJson("/api/quality-incidents?limit=10"),
-      getJson("/api/reports/reliability?hours=24"),
-    ]);
+function timestampLabel() {
+  return \`Updated \${new Date().toLocaleTimeString([], {
+    hour: "2-digit", minute: "2-digit", second: "2-digit"
+  })}\`;
+}
 
-    renderStatus(status);
-    renderHistory(history);
-    renderOutages(outages);
-    renderStatistics(statistics);
-    renderServices(services);
-    renderServiceOutages(serviceOutages);
-    renderNetworkQuality(quality);
-    renderQualityIncidents(qualityIncidents);
-    renderReliabilityReport(reliability);
-    $("last-updated").textContent =
-      `Updated ${new Date().toLocaleTimeString([], {
-        hour: "2-digit", minute: "2-digit", second: "2-digit"
-      })}`;
-  } catch (error) {
-    console.error("Dashboard refresh failed:", error);
-    $("status-kicker").textContent = "DATA CONNECTION ERROR";
-    $("overall-title").textContent = "Cannot load monitoring data";
-    $("overall-message").textContent =
-      "Check that the EthioNet Pulse server is running, then refresh.";
-    $("connection-banner").className = "status-banner status-unknown";
-    $("status-icon").textContent = "!";
-    $("last-updated").textContent = "Refresh failed";
-  } finally {
-    button.disabled = false;
-    icon.classList.remove("spinning");
+function renderOverviewPage(status, statistics, history, outages, serviceOutages, qualityIncidents) {
+  const state = status.internet_status || "unknown";
+  $("connection-banner").className = \`status-banner status-\${state}\`;
+  $("status-icon").textContent = state === "online" ? "✓" : state === "offline" ? "!" : "?";
+  $("status-kicker").textContent = state === "online" ? "CONNECTION HEALTHY" :
+    state === "offline" ? "CONNECTION INTERRUPTED" : "MONITORING STATUS";
+  $("overall-title").textContent = {
+    online: "Your internet connection is online",
+    offline: "No configured targets are responding",
+    unknown: "Connectivity status is uncertain",
+  }[state] || "Connectivity status is uncertain";
+  $("overall-message").textContent = {
+    online: "At least one configured destination responded to its latest probe.",
+    offline: "Every completed probe failed. Check the network and verify the results.",
+    unknown: "The monitor has insufficient results to determine connectivity.",
+  }[state] || "Waiting for a reliable connectivity result.";
+
+  const targets = Array.isArray(status.targets) ? status.targets : [];
+  const online = targets.filter((item) => item.status === "online").length;
+  $("banner-online-count").textContent = online;
+  $("reachable-count").textContent = online;
+  $("reachable-detail").textContent = \`\${online} of \${targets.length} configured targets responding\`;
+
+  const latency = statistics.latency || {};
+  $("avg-latency").textContent = formatLatency(latency.average_ms);
+  $("latency-detail").textContent = latency.sample_count
+    ? \`\${latency.sample_count} recorded samples · min \${formatLatency(latency.minimum_ms)}\`
+    : "No successful latency samples yet";
+
+  const incidentRows = [
+    ...(Array.isArray(outages.items) ? outages.items : []),
+    ...(Array.isArray(serviceOutages.items) ? serviceOutages.items : []),
+    ...(Array.isArray(qualityIncidents.items) ? qualityIncidents.items : []),
+  ];
+  const active = incidentRows.filter((item) => !item.is_resolved).length;
+  $("active-incidents").textContent = String(active);
+  $("incident-detail").textContent = active
+    ? "Unresolved events across the monitor"
+    : "No unresolved incidents recorded";
+  $("recent-checks").textContent = String(history.count ?? (history.items || []).length);
+}
+
+function renderServiceHistory(payload) {
+  const rows = Array.isArray(payload.items) ? payload.items : [];
+  const body = $("service-history-list");
+  if (!body) return;
+  body.replaceChildren();
+  if ($("service-history-count")) {
+    $("service-history-count").textContent = \`\${rows.length} records\`;
+  }
+  if (!rows.length) {
+    const tr = element("tr");
+    const td = element("td", "loading-row", "No service checks have been recorded.");
+    td.colSpan = 5;
+    tr.append(td);
+    body.append(tr);
+    return;
+  }
+  for (const item of rows) {
+    const row = element("tr");
+    row.append(
+      element("td", "", item.service_url || "—"),
+      (() => { const td = element("td"); td.append(makeChip(item.status || "pending")); return td; })(),
+      element("td", "", item.http_status_code == null ? "—" : String(item.http_status_code)),
+      element("td", "", formatLatency(item.response_time_ms)),
+      element("td", "", formatDateTime(item.timestamp))
+    );
+    body.append(row);
   }
 }
 
-$("refresh-button").addEventListener("click", refreshDashboard);
-$("diagnose-button").addEventListener("click", runDiagnosis);
+function renderQualityHistory(payload) {
+  const rows = Array.isArray(payload.items) ? payload.items : [];
+  const body = $("quality-history-list");
+  if (!body) return;
+  body.replaceChildren();
+  if ($("quality-history-count")) {
+    $("quality-history-count").textContent = \`\${rows.length} samples\`;
+  }
+  if (!rows.length) {
+    const tr = element("tr");
+    const td = element("td", "loading-row", "No quality measurements have been recorded.");
+    td.colSpan = 6;
+    tr.append(td);
+    body.append(tr);
+    return;
+  }
+  for (const item of rows) {
+    const row = element("tr");
+    const state = element("td");
+    state.append(makeChip(item.probe_completed ? (item.is_degraded ? "degraded" : "healthy") : "error"));
+    row.append(
+      element("td", "", item.target || "—"),
+      state,
+      element("td", "", item.packet_loss_percent == null ? "—" : \`\${Number(item.packet_loss_percent).toFixed(1)}%\`),
+      element("td", "", formatLatency(item.latency_avg_ms)),
+      element("td", "", formatLatency(item.latency_jitter_ms)),
+      element("td", "", formatDateTime(item.timestamp))
+    );
+    body.append(row);
+  }
+}
+
+async function refreshCurrentPage() {
+  const root = $("page-root");
+  if (!root) return;
+  const page = root.dataset.page || "overview";
+  const button = $("refresh-button");
+  const icon = $("refresh-icon");
+  if (page === "settings") {
+    if (button) button.hidden = true;
+    setUpdated("Settings");
+    return;
+  }
+  if (button) button.disabled = true;
+  if (icon) icon.classList.add("spinning");
+  setPageError("");
+
+  try {
+    if (page === "overview") {
+      const [status, statistics, history, outages, serviceOutages, qualityIncidents] = await Promise.all([
+        getJson("/api/status"),
+        getJson("/api/statistics?hours=24"),
+        getJson("/api/history?limit=90"),
+        getJson("/api/outages?limit=10"),
+        getJson("/api/service-outages?limit=50"),
+        getJson("/api/quality-incidents?limit=50"),
+      ]);
+      renderOverviewPage(status, statistics, history, outages, serviceOutages, qualityIncidents);
+      setUpdated(status.last_checked ? \`Last check \${formatClock(status.last_checked)}\` : timestampLabel());
+    } else if (page === "connectivity") {
+      const [status, history, statistics] = await Promise.all([
+        getJson("/api/status"),
+        getJson("/api/history?limit=90"),
+        getJson("/api/statistics?hours=24"),
+      ]);
+      renderTargets(status.targets || []);
+      if ($("target-count")) $("target-count").textContent = \`\${(status.targets || []).length} targets\`;
+      renderHistory(history);
+      renderStatistics(statistics);
+      setUpdated(timestampLabel());
+    } else if (page === "services") {
+      const [services, incidents, history] = await Promise.all([
+        getJson("/api/services"),
+        getJson("/api/service-outages?limit=10"),
+        getJson("/api/services/history?limit=25"),
+      ]);
+      renderServices(services);
+      renderServiceOutages(incidents);
+      renderServiceHistory(history);
+      setUpdated(timestampLabel());
+    } else if (page === "quality") {
+      const [quality, incidents, history] = await Promise.all([
+        getJson("/api/quality"),
+        getJson("/api/quality-incidents?limit=10"),
+        getJson("/api/quality/history?limit=25"),
+      ]);
+      renderNetworkQuality(quality);
+      renderQualityIncidents(incidents);
+      renderQualityHistory(history);
+      setUpdated(timestampLabel());
+    } else if (page === "diagnosis") {
+      await runDiagnosis();
+      setUpdated(timestampLabel());
+    } else if (page === "incidents") {
+      const [outages, serviceOutages, qualityIncidents] = await Promise.all([
+        getJson("/api/outages?limit=50"),
+        getJson("/api/service-outages?limit=50"),
+        getJson("/api/quality-incidents?limit=50"),
+      ]);
+      renderOutages(outages);
+      renderServiceOutages(serviceOutages);
+      renderQualityIncidents(qualityIncidents);
+      setUpdated(timestampLabel());
+    } else if (page === "reports") {
+      const report = await getJson("/api/reports/reliability?hours=24");
+      renderReliabilityReport(report);
+      setUpdated(timestampLabel());
+    }
+  } catch (error) {
+    console.error("Page refresh failed:", error);
+    if (String(error.message || "").includes("HTTP 401")) {
+      window.location.assign("/login");
+      return;
+    }
+    setPageError("The page data could not be loaded. Check that EthioNet Pulse is running, then refresh.");
+    setUpdated("Refresh failed");
+  } finally {
+    if (button) button.disabled = false;
+    if (icon) icon.classList.remove("spinning");
+  }
+}
+
+if ($("refresh-button")) {
+  $("refresh-button").addEventListener("click", refreshCurrentPage);
+}
+if ($("diagnose-button")) {
+  $("diagnose-button").addEventListener("click", runDiagnosis);
+}
+window.addEventListener("ethionet-theme-change", () => {
+  if (latestHistoryForChart.length && $("latency-chart")) drawChart(latestHistoryForChart);
+});
 window.addEventListener("resize", () => {
-  // Refreshing redraws the chart using its new container dimensions.
-  refreshDashboard();
+  if ($("page-root")?.dataset.page === "connectivity") drawChart(latestHistoryForChart);
 });
 
-refreshDashboard();
-window.setInterval(refreshDashboard, 30_000);
+refreshCurrentPage();
+if (!["diagnosis", "settings"].includes($("page-root")?.dataset.page)) {
+  window.setInterval(refreshCurrentPage, 30_000);
+}
+
