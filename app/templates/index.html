@@ -43,6 +43,9 @@
       <a class="nav-link" href="#outages">
         <span class="nav-symbol">◷</span> Outage history
       </a>
+      <a class="nav-link" href="#reports">
+        <span class="nav-symbol">▤</span> Reliability report
+      </a>
       <a class="nav-link" href="/docs" target="_blank" rel="noreferrer">
         <span class="nav-symbol">⌘</span> API explorer
         <span class="external-mark">↗</span>
@@ -308,6 +311,26 @@
           </table>
         </div>
       </article>
+    </section>
+
+    <section class="panel reliability-report-panel" id="reports">
+      <div class="panel-heading">
+        <div>
+          <p class="eyebrow">EVIDENCE & REPORTING</p>
+          <h2>Reliability report · last 24 hours</h2>
+          <p class="panel-subtitle">
+            A compact summary of observed connectivity, service checks, and connection quality.
+          </p>
+        </div>
+        <a class="refresh-button" href="/api/reports/reliability?hours=24"
+           target="_blank" rel="noreferrer">View JSON report ↗</a>
+      </div>
+      <div class="reliability-summary-grid" id="reliability-summary" aria-live="polite">
+        <div class="loading-row">Preparing reliability summary…</div>
+      </div>
+      <p class="panel-footnote">
+        Sample success rates describe recorded checks, not time-based uptime. Network uptime must be read alongside measurement coverage; unmonitored gaps are not counted as uptime.
+      </p>
     </section>
 
     <footer class="page-footer">
