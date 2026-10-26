@@ -116,7 +116,7 @@ With the virtual environment activated and dependencies installed, run the stand
 python -m unittest discover -s tests -v
 ```
 
-The tests cover monitoring persistence, service incident thresholds, packet-loss parsing, quality degradation/recovery, Telegram alert formatting, reliability reporting, diagnostic scenarios, and the rule that long measurement gaps must not be counted as uptime.
+The tests cover monitoring persistence, service incident thresholds, packet-loss parsing, quality degradation/recovery, Telegram alert formatting, reliability reporting, diagnostic scenarios, password hashing/verification, and the rule that long measurement gaps must not be counted as uptime.
 
 ## Connectivity diagnosis
 
