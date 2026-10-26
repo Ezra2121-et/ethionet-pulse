@@ -1,8 +1,10 @@
 """Public authentication pages and authenticated monitoring pages."""
 
+import asyncio
 import base64
 import hashlib
 import hmac
+import logging
 import re
 import secrets
 import time
@@ -10,6 +12,9 @@ from pathlib import Path
 from urllib.parse import parse_qs, urlencode
 
 import httpx
+from google.auth.exceptions import GoogleAuthError
+from google.auth.transport.requests import Request as GoogleAuthRequest
+from google.oauth2 import id_token as google_id_token
 from fastapi import APIRouter, Depends, Request, HTTPException
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
@@ -24,6 +29,7 @@ from app.models import User
 auth_router = APIRouter(tags=["authentication"])
 web_router = APIRouter(tags=["web pages"])
 templates = Jinja2Templates(directory=str(Path(__file__).resolve().parent / "templates"))
+logger = logging.getLogger(__name__)
 
 EMAIL_PATTERN = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 SCRYPT_N = 2**14
@@ -314,17 +320,18 @@ async def google_callback(
             )
             token_response.raise_for_status()
             token_payload = token_response.json()
-            id_token = token_payload.get("id_token")
-            if not id_token:
+            id_token_value = token_payload.get("id_token")
+            if not id_token_value:
                 raise ValueError("Google did not return an ID token.")
 
-            info_response = await client.get(
-                "https://oauth2.googleapis.com/tokeninfo",
-                params={"id_token": id_token},
-                headers={"Accept": "application/json"},
-            )
-            info_response.raise_for_status()
-            claims = info_response.json()
+        # Verify the token signature and standard claims against Google's public
+        # certificates instead of relying on the debugging-only tokeninfo endpoint.
+        claims = await asyncio.to_thread(
+            google_id_token.verify_oauth2_token,
+            id_token_value,
+            GoogleAuthRequest(),
+            settings.GOOGLE_CLIENT_ID.strip(),
+        )
 
         if claims.get("aud") != settings.GOOGLE_CLIENT_ID.strip():
             raise ValueError("Unexpected Google token audience.")
@@ -373,7 +380,7 @@ async def google_callback(
         _csrf_token(request)
         return RedirectResponse("/dashboard", status_code=303)
 
-    except (httpx.HTTPError, ValueError, TypeError, KeyError):
+    except (httpx.HTTPError, GoogleAuthError, ValueError, TypeError, KeyError, OSError):
         return _flash_redirect(
             request,
             "Google sign-in could not be verified. Check the OAuth configuration and try again.",
