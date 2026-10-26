@@ -1,0 +1,17 @@
+{% extends "app_base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-heading"><div><h2>Connectivity outages</h2><p class="panel-subtitle">Confirmed network interruptions and recovery events.</p></div><span class="count-label" id="outage-count">0 records</span></div>
+  <div class="outage-list" id="outage-list"><div class="loading-row">Loading outage history…</div></div>
+</section>
+
+<section class="panel section-gap">
+  <div class="panel-heading"><div><h2>Service incidents</h2><p class="panel-subtitle">Confirmed HTTP endpoint failures and recovery durations.</p></div><span class="count-label" id="service-incident-count">0 incidents</span></div>
+  <div class="service-outage-list" id="service-outage-list"><div class="loading-row">Loading service incidents…</div></div>
+</section>
+
+<section class="panel section-gap">
+  <div class="panel-heading"><div><h2>Network quality incidents</h2><p class="panel-subtitle">Sustained packet-loss or high-latency periods.</p></div><span class="count-label" id="quality-incident-count">0 incidents</span></div>
+  <div class="service-outage-list" id="quality-incident-list"><div class="loading-row">Loading quality incidents…</div></div>
+</section>
+{% endblock %}
