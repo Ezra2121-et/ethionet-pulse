@@ -784,3 +784,92 @@ td .status-chip { font-size: 9px; }
   margin: 15px 0 8px;
 }
 .diagnosis-group-title:first-of-type { margin-top: 0; }
+
+
+/* Continuous HTTP service monitoring */
+.service-monitoring-panel { margin-top: 19px; }
+.service-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 10px;
+  padding: 0 20px 18px;
+}
+.service-card {
+  min-width: 0;
+  display: grid;
+  gap: 10px;
+  align-content: start;
+  padding: 14px;
+  border: 1px solid #25344a;
+  border-radius: 10px;
+  background: #0e1725;
+}
+.service-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+.service-url, .service-incident-url {
+  min-width: 0;
+  color: #e0e8f5;
+  font-size: 11px;
+  font-weight: 650;
+  overflow-wrap: anywhere;
+}
+.service-metrics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+  color: #a8b5c8;
+  font-size: 10px;
+}
+.service-metrics span {
+  padding: 5px 7px;
+  border-radius: 5px;
+  background: #192536;
+}
+.service-meta { color: var(--muted); font-size: 10px; overflow-wrap: anywhere; }
+.service-error { color: var(--amber); font-size: 10px; overflow-wrap: anywhere; }
+.service-empty {
+  grid-column: 1 / -1;
+  padding: 20px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
+  border: 1px dashed #33435b;
+  border-radius: 9px;
+}
+.service-incidents-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 20px 9px;
+  border-top: 1px solid #223047;
+}
+.service-incidents-heading h3 { margin: 0 0 5px; font-size: 13px; }
+.service-incidents-heading .panel-subtitle { margin: 0; }
+.service-outage-list { padding: 0 20px 10px; }
+.service-incident {
+  display: flex;
+  align-items: flex-start;
+  gap: 11px;
+  padding: 12px 0;
+  border-top: 1px solid #223047;
+}
+.service-incident:first-child { border-top: 0; }
+.service-incident-copy { display: grid; gap: 5px; flex: 1; min-width: 0; }
+.service-incident-side {
+  display: grid;
+  gap: 6px;
+  justify-items: end;
+  text-align: right;
+}
+@media (max-width: 600px) {
+  .service-list, .service-outage-list { padding-left: 14px; padding-right: 14px; }
+  .service-incidents-heading { padding-left: 14px; padding-right: 14px; }
+  .service-card-top { flex-direction: column; }
+  .service-incident { gap: 8px; }
+  .service-incident-side { max-width: 92px; }
+}
