@@ -27,6 +27,9 @@ Unstable connectivity can interrupt day-to-day work, but small organizations may
 - **Reliability reporting** combining time-based network availability with measurement coverage, service sample success rates, quality measurements, and incident durations.
 - **Optional Telegram alerts** on confirmed outage start and recovery transitions, with consecutive-check thresholds to reduce transient false alarms.
 - **JSON API** with an interactive API explorer at `/docs`.
+- **Separate dashboard pages** for overview, connectivity, service monitoring, network quality, diagnosis, incidents, reports, and settings.
+- **Account access** with manual email/password registration and login, signed sessions, CSRF checks on forms, and optional Google OAuth sign-in.
+- **Dark mode by default** with a saved light/dark preference.
 - **Lightweight local deployment** with Python and a local database.
 
 ## Technology
@@ -66,6 +69,10 @@ python -m pip install --upgrade pip
 pip install -r requirements.txt
 
 cp .env.example .env
+
+# Set a private session-signing key (keeps login sessions secure across restarts).
+SESSION_SECRET=$(openssl rand -hex 32)
+sed -i "s|^SESSION_SECRET_KEY=.*|SESSION_SECRET_KEY=$SESSION_SECRET|" .env
 ```
 
 Check that the system can run ping:
@@ -82,9 +89,22 @@ uvicorn app.main:app --host 127.0.0.1 --port 8000
 
 Then open:
 
-- Dashboard: http://127.0.0.1:8000
-- API explorer: http://127.0.0.1:8000/docs
+- Sign in: http://127.0.0.1:8000
+- Create an account: http://127.0.0.1:8000/register
+- Monitoring overview (after sign-in): http://127.0.0.1:8000/dashboard
+- API explorer: http://127.0.0.1:8000/docs (monitoring endpoints require a signed-in session)
 - Health check: http://127.0.0.1:8000/health
+
+The landing page is intentionally limited to sign-in, account creation, and contact information. The dashboard is split into independent feature pages to avoid one long scrolling page.
+
+### Google sign-in (optional)
+
+1. Create an OAuth 2.0 Web application client in Google Cloud Console.
+2. Register this authorized redirect URI for a local instance: `http://127.0.0.1:8000/auth/google/callback`.
+3. Set `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in `.env`, then restart the app. The Google button is visible even when credentials are missing; in that case the app displays a configuration message and manual email/password registration still works.
+4. Optional footer contact email can be set with `CONTACT_EMAIL`.
+
+The app uses a signed session cookie. Keep `SESSION_SECRET_KEY` private and set `SESSION_COOKIE_SECURE=true` only when the app is served over HTTPS. The default `false` is intended for local HTTP development.
 
 Stop the server with `Ctrl+C`.
 
@@ -115,6 +135,11 @@ Edit the local `.env` file before launching the application:
 | Setting | Purpose | Default |
 | --- | --- | --- |
 | `APP_NAME` | Name shown by the application | `EthioNet Pulse` |
+| `SESSION_SECRET_KEY` | Secret used to sign session cookies; generate a private random value | empty in `.env.example` |
+| `SESSION_COOKIE_SECURE` | Require HTTPS for the session cookie | `false` for local HTTP |
+| `GOOGLE_CLIENT_ID` | Optional Google OAuth client ID | empty |
+| `GOOGLE_CLIENT_SECRET` | Optional Google OAuth client secret | empty |
+| `CONTACT_EMAIL` | Optional contact email shown on the sign-in pages | empty (GitHub contact link shown) |
 | `DATABASE_URL` | SQLite database location | `sqlite+aiosqlite:///./data/ethionet.db` |
 | `CHECK_INTERVAL_SECONDS` | Time between check cycles | `30` |
 | `INTERNET_TARGETS` | Comma-separated hosts/IP addresses to check | `1.1.1.1,8.8.8.8,9.9.9.9` |
@@ -187,10 +212,11 @@ A private speaking outline is maintained separately from this public repository.
 ## Known limitations and future work
 
 - ICMP ping can be blocked by a destination or network even when other services work; packet-loss warnings require context and are not proof that all internet access is unavailable. Compare them with HTTP checks where possible.
-- This prototype is intended to run as a local, single-instance monitor. A public managed deployment, customer accounts, durable multi-process alert queues, and central multi-site monitoring are not part of the demonstrated baseline.
+- This remains a local, single-instance monitoring workspace. Accounts gate access to the app, but all signed-in accounts currently use the same instance-wide monitor settings, service list, history, incident records, and Telegram destination. Do not use this configuration for unrelated customer tenants until per-user ownership and query-level data isolation are implemented.
+- Manual registration does not yet include email verification or password recovery. Google sign-in needs an OAuth client configured by the operator. Before public deployment, add rate limiting, email verification/recovery, production HTTPS, and a persistent secret manager for session secrets.
 - HTTP checks only test the specific URLs configured in `SERVICE_URLS`; they do not prove every function within a service works. Configure safe GET-compatible health endpoints and avoid embedding credentials or secrets in URL query strings.
 - Telegram alerts are optional and require the operator to configure a bot token and chat ID locally.
-- Multi-site monitoring, customer accounts, a hosted service, and automatic root-cause detection remain future work.
+- Multi-site monitoring, per-account monitoring configuration, data isolation between customer tenants, a hosted service, and automatic root-cause detection remain future work.
 
 ## Author
 
