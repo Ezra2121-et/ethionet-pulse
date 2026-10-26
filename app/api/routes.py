@@ -6,8 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.config import settings
 from app.database import get_db
-from app.models import ConnectivityCheck, Outage, ServiceCheck, ServiceOutage
-from app.monitoring.urls import safe_service_url
+from app.models import (\n    ConnectivityCheck, Outage, ServiceCheck, ServiceOutage,\n    NetworkQualityCheck, NetworkQualityIncident,\n)\nfrom app.monitoring.urls import safe_service_url
 from app.monitoring.diagnostics import run_connectivity_diagnosis
 
 router = APIRouter(prefix="/api", tags=["monitoring"])
@@ -320,6 +319,148 @@ async def get_service_outages(
             "end_time": _iso(row.end_time),
             "duration_seconds": duration,
             "is_resolved": row.is_resolved,
+            "notes": row.notes,
+        })
+
+    return {"count": len(items), "items": items}
+
+
+
+@router.get("/quality")
+async def get_network_quality(
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return the latest multi-packet quality measurements for each target."""
+    targets = settings.targets_list
+    latest_by_target: dict[str, NetworkQualityCheck] = {}
+    if targets:
+        statement = (
+            select(NetworkQualityCheck)
+            .where(NetworkQualityCheck.target.in_(targets))
+            .order_by(NetworkQualityCheck.timestamp.desc(), NetworkQualityCheck.id.desc())
+            .limit(2000)
+        )
+        rows = (await db.scalars(statement)).all()
+        for row in rows:
+            latest_by_target.setdefault(row.target, row)
+
+    items = []
+    for target in targets:
+        row = latest_by_target.get(target)
+        if row is None:
+            status = "pending"
+        elif not row.probe_completed:
+            status = "error"
+        else:
+            status = "degraded" if row.is_degraded else "healthy"
+
+        items.append({
+            "target": target,
+            "status": status,
+            "timestamp": _iso(row.timestamp) if row else None,
+            "probe_completed": row.probe_completed if row else None,
+            "packets_sent": row.packets_sent if row else None,
+            "packets_received": row.packets_received if row else None,
+            "packet_loss_percent": row.packet_loss_percent if row else None,
+            "latency_min_ms": row.latency_min_ms if row else None,
+            "latency_avg_ms": row.latency_avg_ms if row else None,
+            "latency_max_ms": row.latency_max_ms if row else None,
+            "latency_jitter_ms": row.latency_jitter_ms if row else None,
+            "error_message": row.error_message if row else None,
+        })
+
+    return {
+        "configured_targets": len(targets),
+        "healthy_targets": sum(item["status"] == "healthy" for item in items),
+        "degraded_targets": sum(item["status"] == "degraded" for item in items),
+        "items": items,
+    }
+
+
+@router.get("/quality/history")
+async def get_network_quality_history(
+    limit: int = Query(default=100, ge=1, le=1000),
+    target: str | None = Query(default=None, max_length=100),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return historical multi-packet quality samples."""
+    statement = select(NetworkQualityCheck)
+    if target:
+        statement = statement.where(NetworkQualityCheck.target == target)
+    statement = statement.order_by(
+        NetworkQualityCheck.timestamp.desc(), NetworkQualityCheck.id.desc()
+    ).limit(limit)
+    rows = (await db.scalars(statement)).all()
+
+    return {
+        "count": len(rows),
+        "items": [
+            {
+                "id": row.id,
+                "timestamp": _iso(row.timestamp),
+                "target": row.target,
+                "status": (
+                    "error" if not row.probe_completed
+                    else "degraded" if row.is_degraded
+                    else "healthy"
+                ),
+                "probe_completed": row.probe_completed,
+                "packets_sent": row.packets_sent,
+                "packets_received": row.packets_received,
+                "packet_loss_percent": row.packet_loss_percent,
+                "latency_min_ms": row.latency_min_ms,
+                "latency_avg_ms": row.latency_avg_ms,
+                "latency_max_ms": row.latency_max_ms,
+                "latency_jitter_ms": row.latency_jitter_ms,
+                "error_message": row.error_message,
+            }
+            for row in rows
+        ],
+    }
+
+
+@router.get("/quality-incidents")
+async def get_network_quality_incidents(
+    limit: int = Query(default=10, ge=1, le=1000),
+    db: AsyncSession = Depends(get_db),
+) -> dict:
+    """Return recent sustained degradation incidents, with duration so far."""
+    statement = (
+        select(NetworkQualityIncident)
+        .order_by(
+            NetworkQualityIncident.start_time.desc(),
+            NetworkQualityIncident.id.desc(),
+        )
+        .limit(limit)
+    )
+    rows = (await db.scalars(statement)).all()
+    now = datetime.now(timezone.utc)
+    items = []
+
+    for row in rows:
+        start = row.start_time
+        if start.tzinfo is None:
+            start = start.replace(tzinfo=timezone.utc)
+        end = row.end_time
+        if end is None and not row.is_resolved:
+            duration = max(0, int((now - start).total_seconds()))
+        elif end is not None:
+            normalized_end = end if end.tzinfo else end.replace(tzinfo=timezone.utc)
+            duration = row.duration_seconds
+            if duration is None:
+                duration = max(0, int((normalized_end - start).total_seconds()))
+        else:
+            duration = row.duration_seconds
+
+        items.append({
+            "id": row.id,
+            "target": row.target,
+            "start_time": _iso(row.start_time),
+            "end_time": _iso(row.end_time),
+            "duration_seconds": duration,
+            "is_resolved": row.is_resolved,
+            "peak_packet_loss_percent": row.peak_packet_loss_percent,
+            "peak_latency_ms": row.peak_latency_ms,
             "notes": row.notes,
         })
 
