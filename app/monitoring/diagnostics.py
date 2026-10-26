@@ -6,6 +6,7 @@ block ICMP echo requests while forwarding other traffic normally.
 
 import asyncio
 import shutil
+from datetime import datetime, timezone
 from typing import Any
 
 from app.config import settings
@@ -152,9 +153,7 @@ async def run_connectivity_diagnosis() -> dict[str, Any]:
 
     diagnosis = classify_diagnosis(gateway_result["status"], external)
     return {
-        "diagnosed_at": __import__("datetime").datetime.now(
-            __import__("datetime").timezone.utc
-        ).isoformat(),
+        "diagnosed_at": datetime.now(timezone.utc).isoformat(),
         "gateway": gateway_result,
         "external_targets": external,
         "diagnosis": diagnosis,
