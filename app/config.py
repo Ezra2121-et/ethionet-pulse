@@ -34,6 +34,13 @@ class Settings(BaseSettings):
     OUTAGE_FAILURE_THRESHOLD: int = 2
     OUTAGE_RECOVERY_THRESHOLD: int = 2
 
+    # Web authentication
+    SESSION_SECRET_KEY: str = ""
+    SESSION_COOKIE_SECURE: bool = False
+    GOOGLE_CLIENT_ID: str = ""
+    GOOGLE_CLIENT_SECRET: str = ""
+    CONTACT_EMAIL: str = ""
+
     # Telegram (optional)
     TELEGRAM_BOT_TOKEN: str = ""
     TELEGRAM_CHAT_ID: str = ""
