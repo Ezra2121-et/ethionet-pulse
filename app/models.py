@@ -91,3 +91,14 @@ class NetworkQualityIncident(Base):
     peak_latency_ms = Column(Float, nullable=True)
     notes = Column(Text, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+class User(Base):
+    """Account used to access the shared EthioNet Pulse monitoring workspace."""
+    __tablename__ = "users"
+
+    id = Column(Integer, primary_key=True, index=True)
+    email = Column(String(255), nullable=False, unique=True, index=True)
+    display_name = Column(String(120), nullable=False, default="")
+    password_hash = Column(String(512), nullable=True)
+    google_sub = Column(String(255), nullable=True, unique=True, index=True)
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
